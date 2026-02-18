@@ -1,7 +1,12 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore } from "@/stores/authStore";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios";
 
-const API_URL = process.env.API_URL || 'http://192.168.1.149:5000/api';
+const API_URL = process.env.API_URL || "http://192.168.1.149:5000/api";
 
 class ApiService {
   private static instance: ApiService;
@@ -11,7 +16,7 @@ class ApiService {
     this.api = axios.create({
       baseURL: API_URL,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -25,7 +30,7 @@ class ApiService {
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     this.api.interceptors.response.use(
@@ -35,7 +40,7 @@ class ApiService {
           useAuthStore.getState().logout();
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -51,18 +56,38 @@ class ApiService {
     return response.data;
   }
 
-  public async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    const response: AxiosResponse<T> = await this.api.post<T>(url, data, config);
+  public async post<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    const response: AxiosResponse<T> = await this.api.post<T>(
+      url,
+      data,
+      config,
+    );
     return response.data;
   }
 
-  public async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response: AxiosResponse<T> = await this.api.put<T>(url, data, config);
     return response.data;
   }
 
-  public async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    const response: AxiosResponse<T> = await this.api.patch<T>(url, data, config);
+  public async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    const response: AxiosResponse<T> = await this.api.patch<T>(
+      url,
+      data,
+      config,
+    );
     return response.data;
   }
 

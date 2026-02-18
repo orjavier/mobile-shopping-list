@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
-import { userRepository } from '@/src/repositories';
-import { showToast } from '@/src/toast';
+import { userRepository } from '@/repositories';
 import { useAuthStore } from '@/stores/authStore';
+import { showToast } from '@/toast';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function LoginScreen() {
       }
     } catch (error: unknown) {
       let message = 'Error al iniciar sesión';
-      
+
       if (error && typeof error === 'object' && 'response' in error) {
         const err = error as { response?: { data?: { message?: string }, status: number } };
         message = err.response?.data?.message || `Error: ${err.response?.status}`;
@@ -47,7 +47,7 @@ export default function LoginScreen() {
         const err = error as { message: string };
         message = err.message;
       }
-      
+
       showToast.error('Error', message);
     } finally {
       setIsLoading(false);

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
 import { useAuthStore } from '@/stores/authStore';
