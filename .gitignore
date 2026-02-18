@@ -1,5 +1,16 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+#Agents
+.agents/
+
+# Build outputs
+dist/
+build/
+.expo/
+*.apk
+*.aab
+*.ipa
+
 # dependencies
 node_modules/
 
@@ -8,6 +19,10 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+!.expo/images
+!.expo/packs
+!.expo/settings.json
+!.expo/shared/
 
 # Native
 .kotlin/
@@ -29,6 +44,40 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+
+# Android
+android/app/build/
+android/build/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/key.properties
+
+# iOS
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+ios/ExpenseControl.xcworkspace/
+
+# TypeScript
+*.tsbuildinfo
+
+# IDEs
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
 
 # local env files
 .env*.local
