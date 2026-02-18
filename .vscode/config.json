@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "gpt-4o-mini",
+  "maxTokens": 4096,
+  "contextFiles": [
+    "src/**/*.ts",
+    "models/**/*.ts",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "entryPoints": ["src/server.ts"],
+  "gitignore": true,
+  "skills": {
+    "routes": {
+      "description": "Genera Express routes TypeScript",
+      "files": ["src/routes/**/*.ts"]
+    }
+  }
+}
