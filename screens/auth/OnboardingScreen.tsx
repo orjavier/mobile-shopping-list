@@ -1,26 +1,22 @@
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
+import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
      Dimensions,
      FlatList,
-     Image,
-     ImageStyle,
+     ImageBackground,
      NativeScrollEvent,
      NativeSyntheticEvent,
      Pressable,
-     SafeAreaView,
      StatusBar,
      StyleSheet,
      Text,
-     TextStyle,
      TouchableOpacity,
-     View,
-     ViewStyle,
+     View
 } from 'react-native';
 import { PieChart } from "react-native-gifted-charts";
-
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SlideData {
      readonly id: string;
@@ -33,18 +29,10 @@ interface SlideProps {
      readonly item: SlideData;
 }
 
-interface OnboardingNavigation {
-     replace(screen: string): void;
-}
-
-interface OnboardingProps {
-     readonly navigation: OnboardingNavigation;
-}
-
 const { width, height } = Dimensions.get('window');
 
 const COLORS: Record<string, string> = {
-     primary: '#282534',
+     primary: '#FF803E',
      white: '#fff',
      indicatorInactive: '#888',
 };
@@ -53,48 +41,70 @@ const SLIDES: readonly SlideData[] = [
      {
           id: '1',
           image: require('../../assets/images/image1.png'),
-          title: 'Gestiona tus listas',
+          title: 'Bienvenidos',
           subtitle: 'Organiza tus compras de manera fácil y rápida',
      },
      {
           id: '2',
           image: require('../../assets/images/image2.png'),
-          title: 'Comparte con familia',
-          subtitle: 'Comparte tus listas con quienes quieras',
+          title: 'No importa si olvidas algo',
+          subtitle: 'Tu lista siempre disponible en tu bolsillo',
      },
      {
           id: '3',
           image: require('../../assets/images/image3.png'),
-          title: 'Nunca olvidas nada',
-          subtitle: 'Tu lista siempre disponible en tu bolsillo',
+          title: 'Organiza tus compras',
+          subtitle: 'Asi evitas comprar de mas',
      },
      {
           id: '4',
           image: require('../../assets/images/image4.png'),
-          title: 'Nunca olvidas nada',
-          subtitle: 'Tu lista siempre disponible en tu bolsillo',
-     },
-     {
-          id: '5',
-          image: require('../../assets/images/image5.png'),
-          title: 'Nunca olvidas nada',
-          subtitle: 'Tu lista siempre disponible en tu bolsillo',
+          title: 'Tranquilidad y comodidad',
+          subtitle: 'Sientete seguro/a de que no vas a olvidar nada',
      },
 ];
 
-const Slide = ({ item }: SlideProps): React.ReactElement => (
-     <View style={styles.slideContainer}>
-          <Image
-               source={item.image}
-               style={styles.image}
-               resizeMode="contain"
-          />
-          <View style={styles.textContainer}>
-               <Text style={styles.title}>{item.title}</Text>
-               <Text style={styles.subtitle}>{item.subtitle}</Text>
+const OnboardingSlide = ({ item }: SlideProps): React.ReactElement => {
+     if (item.id === '1') {
+          return (
+               <ImageBackground
+                    source={require('../../assets/images/image1.png')}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+               >
+                    <View style={styles.textContainer}>
+                         <Image
+                              source={require('../../assets/SVGs/logo.svg')}
+                              style={{ width: 200, height: 50, marginRight: -20 }}
+                              contentFit="cover"
+                         />
+                         <View style={{ paddingBottom: 60 }} />
+                         <Text style={item.id === '1' ? styles.mainTitle : styles.title}>{item.title}</Text>
+                         <Text style={item.id === '1' ? styles.mainSubtitle : styles.subtitle}>{item.subtitle}</Text>
+                    </View>
+               </ImageBackground>
+          );
+     }
+
+     return (
+          <View style={styles.slideContainer}>
+               <Image
+                    source={require("../../assets/SVGs/logo.svg")}
+                    style={styles.logo}
+                    contentFit="contain"
+               />
+               <Image
+                    source={item.image}
+                    style={styles.image}
+                    contentFit="contain"
+               />
+               <View style={styles.textContainer}>
+                    <Text style={styles.title}>{item.title}</Text>
+                    <Text style={styles.subtitle}>{item.subtitle}</Text>
+               </View>
           </View>
-     </View>
-);
+     );
+};
 
 interface PieChartData {
      value: number;
@@ -123,8 +133,8 @@ const OnboardingScreen = (): React.ReactElement => {
           setPieData([
                {
                     value: percentage,
-                    color: '#009FFF',
-                    gradientCenterColor: '#006DFF',
+                    color: COLORS.primary,
+                    gradientCenterColor: COLORS.primary,
                     focused: true,
                },
                { value: remainingPercentage, color: '#e0e0e0', gradientCenterColor: '#e0e0e0' },
@@ -149,20 +159,13 @@ const OnboardingScreen = (): React.ReactElement => {
                setPieData([
                     {
                          value: percentage,
-                         color: '#009FFF',
-                         gradientCenterColor: '#006DFF',
+                         color: COLORS.primary,
+                         gradientCenterColor: COLORS.primary,
                          focused: true,
                     },
                     { value: remainingPercentage, color: '#e0e0e0', gradientCenterColor: '#e0e0e0' },
                ]);
           }
-     };
-
-     const skip = (): void => {
-          const lastSlideIndex = SLIDES.length - 1;
-          const offset = lastSlideIndex * width;
-          flatListRef.current?.scrollToOffset({ offset });
-          setCurrentSlideIndex(lastSlideIndex);
      };
 
      const handleGetStarted = (): void => {
@@ -205,7 +208,7 @@ const OnboardingScreen = (): React.ReactElement => {
                          onPress={handleGetStarted}
                          activeOpacity={0.8}
                     >
-                         <Text style={styles.primaryButtonText}>Saltar</Text>
+                         <Text style={styles.buttonBase}>Saltar</Text>
                     </TouchableOpacity>
                     <View style={styles.buttonSpacer} />
                     <View style={{ padding: 5, alignItems: 'center', }}>
@@ -217,7 +220,7 @@ const OnboardingScreen = (): React.ReactElement => {
                               innerRadius={28}
                               centerLabelComponent={() => {
                                    return (
-                                        <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: '#006DFF', borderRadius: '100%', padding: 6 }}>
+                                        <View style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.primary, borderRadius: '100%', padding: 6 }}>
                                              <Pressable onPress={goToNextSlide}>
                                                   <MaterialIcons name="arrow-forward" size={30} color="#fff" />
                                              </Pressable>
@@ -238,138 +241,140 @@ const OnboardingScreen = (): React.ReactElement => {
      );
 
      const renderItem = ({ item }: { item: SlideData }): React.ReactElement => (
-          <Slide item={item} />
+          <OnboardingSlide item={item} />
      );
 
      const keyExtractor = (item: SlideData): string => item.id;
 
 
      return (
-          <SafeAreaView style={styles.container}>
-               <StatusBar backgroundColor={'transparent'} barStyle="light-content" />
-               <FlatList
-                    ref={flatListRef}
-                    data={SLIDES}
-                    renderItem={renderItem}
-                    keyExtractor={keyExtractor}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    onMomentumScrollEnd={updateCurrentSlideIndex}
-                    contentContainerStyle={styles.flatListContent}
-               />
-               {renderFooter()}
-          </SafeAreaView>
+          <View style={{ flex: 1 }}>
+               <SafeAreaView style={styles.container}>
+                    <StatusBar translucent backgroundColor="transparent" />
+                    <FlatList
+                         ref={flatListRef}
+                         data={SLIDES}
+                         renderItem={renderItem}
+                         keyExtractor={keyExtractor}
+                         horizontal
+                         pagingEnabled
+                         showsHorizontalScrollIndicator={false}
+                         onMomentumScrollEnd={updateCurrentSlideIndex}
+                         contentContainerStyle={styles.flatListContent}
+                    />
+                    {renderFooter()}
+               </SafeAreaView>
+          </View>
      );
 };
 
-interface Styles {
-     container: ViewStyle;
-     slideContainer: ViewStyle;
-     image: ImageStyle;
-     textContainer: ViewStyle;
-     title: TextStyle;
-     subtitle: TextStyle;
-     footer: ViewStyle;
-     indicatorContainer: ViewStyle;
-     indicator: ViewStyle;
-     indicatorActive: ViewStyle;
-     buttonRow: ViewStyle;
-     primaryButton: ViewStyle;
-     primaryButtonText: TextStyle;
-     secondaryButton: ViewStyle;
-     secondaryButtonText: TextStyle;
-     buttonSpacer: ViewStyle;
-     flatListContent: ViewStyle;
-}
-
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
      container: {
           flex: 1,
           backgroundColor: COLORS.white,
-          //marginBottom: 5,
+          marginTop: -40,
+     },
+     logo: {
+          width: 200,
+          height: 50,
      },
      slideContainer: {
           width,
           alignItems: 'center',
           justifyContent: 'center',
+          marginTop: 100,
+     },
+     backgroundImage: {
+          width,
+          height,
+          justifyContent: 'center',
      },
      image: {
-          height: height * 0.5,
+          height: height * 0.45,
           width: width * 0.8,
      },
      textContainer: {
-          alignItems: 'center',
           paddingHorizontal: 20,
+          paddingTop: 20,
+          marginBottom: -40,
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+     },
+     mainTitle: {
+          fontSize: 24,
+          fontWeight: 'bold',
+          textAlign: 'right',
      },
      title: {
-          color: COLORS.primary,
           fontSize: 24,
           fontWeight: 'bold',
           textAlign: 'center',
-          marginBottom: 10,
+     },
+     mainSubtitle: {
+          fontSize: 14,
+          textAlign: 'right',
+          opacity: 0.8,
+          lineHeight: 22,
+          marginLeft: 120,
+          height: 50,
+          wordWrap: 'break-word',
      },
      subtitle: {
-          color: COLORS.primary,
           fontSize: 14,
           textAlign: 'center',
           opacity: 0.8,
           lineHeight: 22,
      },
      footer: {
-          height: height * 0.25,
+          height: height * 0.15,
           justifyContent: 'space-between',
           paddingHorizontal: 20,
-          paddingBottom: 20,
      },
      indicatorContainer: {
           flexDirection: 'row',
           justifyContent: 'center',
-          marginTop: 20,
      },
      indicator: {
           height: 6,
-          width: 12,
+          width: 8,
           backgroundColor: COLORS.indicatorInactive,
           marginHorizontal: 4,
           borderRadius: 4,
      },
      indicatorActive: {
           backgroundColor: COLORS.primary,
-          width: 25,
+          width: 15,
      },
      buttonRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
+          marginBottom: 20,
      },
      primaryButton: {
           flex: 1,
           height: 50,
-          borderRadius: 8,
-          backgroundColor: 'red',//COLORS.white,
+          borderRadius: 50,
+          shadowColor: COLORS.primary,
+          shadowOffset: {
+               width: 0,
+               height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+          backgroundColor: COLORS.primary,
           justifyContent: 'center',
           alignItems: 'center',
+     },
+     buttonBase: {
+          fontWeight: 'bold',
+          fontSize: 15,
      },
      primaryButtonText: {
           fontWeight: 'bold',
           fontSize: 15,
-          color: COLORS.primary,
-     },
-     secondaryButton: {
-          flex: 1,
-          height: 50,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: COLORS.primary,
-          backgroundColor: 'transparent',
-          justifyContent: 'center',
-          alignItems: 'center',
-     },
-     secondaryButtonText: {
-          fontWeight: 'bold',
-          fontSize: 15,
-          color: COLORS.primary,
+          color: COLORS.white,
      },
      buttonSpacer: {
           width: 15,
