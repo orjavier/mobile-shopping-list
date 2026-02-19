@@ -1,3 +1,4 @@
+import CustomButton from '@/components/CustomButton';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
@@ -192,13 +193,12 @@ const OnboardingScreen = (): React.ReactElement => {
           if (isLastSlide) {
                return (
                     <View style={styles.buttonRow}>
-                         <TouchableOpacity
-                              style={styles.primaryButton}
+                         <CustomButton
+                              title="COMENZAR"
                               onPress={handleGetStarted}
-                              activeOpacity={0.8}
-                         >
-                              <Text style={styles.primaryButtonText}>COMENZAR</Text>
-                         </TouchableOpacity></View>
+                              style={{ flex: 1 }}
+                         />
+                    </View>
                );
           }
 
@@ -370,11 +370,6 @@ const styles = StyleSheet.create({
      buttonBase: {
           fontWeight: 'bold',
           fontSize: 15,
-     },
-     primaryButtonText: {
-          fontWeight: 'bold',
-          fontSize: 15,
-          color: COLORS.white,
      },
      buttonSpacer: {
           width: 15,
