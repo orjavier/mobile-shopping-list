@@ -2,19 +2,21 @@ import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+     KeyboardAvoidingView,
+     Platform,
      Pressable,
+     ScrollView,
      StatusBar,
-     StyleSheet
+     StyleSheet,
+     View
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import { Text } from '@/components/Themed';
 import { userRepository } from '@/repositories';
-import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
 
 export default function RegisterScreen() {
      const router = useRouter();
@@ -109,85 +111,94 @@ export default function RegisterScreen() {
                          style={{ width: 550, height: 370, position: 'absolute', bottom: -180, right: -20, opacity: 0.2 }}
                          contentFit="cover"
                     />
+                    <KeyboardAvoidingView
+                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                         style={{ flex: 1 }}
+                    >
+                         <ScrollView
+                              contentContainerStyle={styles.scrollContent}
+                              showsVerticalScrollIndicator={false}
+                              keyboardShouldPersistTaps="handled"
+                         >
+                              <View style={styles.form}>
+                                   <View style={styles.header}>
+                                        <Image
+                                             source={require('../../assets/images/logo-border-white.png')}
+                                             style={{ width: 250, height: 86, marginRight: -20 }}
+                                             contentFit="cover"
+                                        />
+                                   </View>
+                                   <Text style={styles.title}>Crea tu cuenta.</Text>
+                                   <View style={styles.inputContainer}>
+                                        <CustomInput
+                                             label="Nombre"
+                                             value={firstName}
+                                             onChangeText={setFirstName}
+                                             placeholder="John"
+                                             leftIcon="user"
+                                             isLightThemeDefault={true}
+                                        />
+                                   </View>
+                                   <View style={styles.inputContainer}>
+                                        <CustomInput
+                                             label="Apellido"
+                                             value={lastName}
+                                             onChangeText={setLastName}
+                                             placeholder="Doe"
+                                             leftIcon="user"
+                                             isLightThemeDefault={true}
+                                        />
+                                   </View>
+                                   <View style={styles.inputContainer}>
+                                        <CustomInput
+                                             label="Email"
+                                             value={email}
+                                             onChangeText={setEmail}
+                                             placeholder="ejemplo@correo.com"
+                                             leftIcon="mail"
+                                             isLightThemeDefault={true}
+                                        />
+                                   </View>
 
-                    <View style={styles.form}>
-                         <View style={styles.header}>
-                              <Image
-                                   source={require('../../assets/images/logo-border-white.png')}
-                                   style={{ width: 250, height: 86, marginRight: -20 }}
-                                   contentFit="cover"
-                              />
-                         </View>
-                         <Text style={styles.title}>Crea tu cuenta.</Text>
-                         <View style={styles.inputContainer}>
-                              <CustomInput
-                                   label="Nombre"
-                                   value={firstName}
-                                   onChangeText={setFirstName}
-                                   placeholder="John"
-                                   leftIcon="user"
-                                   isLightThemeDefault={true}
-                              />
-                         </View>
-                         <View style={styles.inputContainer}>
-                              <CustomInput
-                                   label="Apellido"
-                                   value={lastName}
-                                   onChangeText={setLastName}
-                                   placeholder="Doe"
-                                   leftIcon="user"
-                                   isLightThemeDefault={true}
-                              />
-                         </View>
-                         <View style={styles.inputContainer}>
-                              <CustomInput
-                                   label="Email"
-                                   value={email}
-                                   onChangeText={setEmail}
-                                   placeholder="ejemplo@correo.com"
-                                   leftIcon="mail"
-                                   isLightThemeDefault={true}
-                              />
-                         </View>
+                                   <View style={styles.inputContainer}>
+                                        <CustomInput
+                                             label="Contraseña"
+                                             value={password}
+                                             onChangeText={setPassword}
+                                             placeholder="Introduzca su contraseña"
+                                             secureTextEntry
+                                             leftIcon="lock"
+                                             isLightThemeDefault={true}
+                                        />
+                                   </View>
+                                   <View style={styles.inputContainer}>
+                                        <CustomInput
+                                             label="Repite la Contraseña"
+                                             value={confirmPassword}
+                                             onChangeText={setConfirmPassword}
+                                             placeholder="Repite la contraseña"
+                                             secureTextEntry
+                                             leftIcon="lock"
+                                             isLightThemeDefault={true}
+                                        />
+                                   </View>
 
-                         <View style={styles.inputContainer}>
-                              <CustomInput
-                                   label="Contraseña"
-                                   value={password}
-                                   onChangeText={setPassword}
-                                   placeholder="Introduzca su contraseña"
-                                   secureTextEntry
-                                   leftIcon="lock"
-                                   isLightThemeDefault={true}
-                              />
-                         </View>
-                          <View style={styles.inputContainer}>
-                               <CustomInput
-                                    label="Repite la Contraseña"
-                                    value={confirmPassword}
-                                    onChangeText={setConfirmPassword}
-                                    placeholder="Repite la contraseña"
-                                    secureTextEntry
-                                    leftIcon="lock"
-                                    isLightThemeDefault={true}
-                               />
-                          </View>
-
-                         <CustomButton
-                              title="Registrarse"
-                              variant="outlined"
-                              onPress={handleRegister}
-                              isLoading={isLoading}
-                              style={styles.loginButton}
-                         />
-                         <View style={styles.footer}>
-                              <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'SF', }}>¿Ya tienes cuenta? </Text>
-                              <Pressable onPress={() => router.replace('/login')}>
-                                   <Text style={styles.linkText}>Inicia Sesión</Text>
-                              </Pressable>
-                         </View>
-                    </View>
-
+                                   <CustomButton
+                                        title="Registrarse"
+                                        variant="outlined"
+                                        onPress={handleRegister}
+                                        isLoading={isLoading}
+                                        style={styles.loginButton}
+                                   />
+                                   <View style={styles.footer}>
+                                        <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'SF', }}>¿Ya tienes cuenta? </Text>
+                                        <Pressable onPress={() => router.replace('/login')}>
+                                             <Text style={styles.linkText}>Inicia Sesión</Text>
+                                        </Pressable>
+                                   </View>
+                              </View>
+                         </ScrollView>
+                    </KeyboardAvoidingView>
                </LinearGradient>
           </View>
      );
@@ -224,6 +235,11 @@ const styles = StyleSheet.create({
           flex: 1,
           width: '100%',
           paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 40,
+     },
+     scrollContent: {
+          flexGrow: 1,
           justifyContent: 'center',
      },
      inputContainer: {

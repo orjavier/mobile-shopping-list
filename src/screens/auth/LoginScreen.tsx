@@ -2,7 +2,10 @@ import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+	KeyboardAvoidingView,
+	Platform,
 	Pressable,
+	ScrollView,
 	StatusBar,
 	StyleSheet
 } from 'react-native';
@@ -77,62 +80,74 @@ export default function LoginScreen() {
 					style={{ width: 550, height: 370, position: 'absolute', bottom: -200, right: -10, opacity: 0.2, }}
 					contentFit="cover"
 				/>
-				<View style={styles.form}>
-					<View style={styles.header}>
-						<Image
-							source={require('../../assets/images/logo-border-white.png')}
-							style={{ width: 250, height: 86, marginRight: -20 }}
-							contentFit="cover"
-						/>
-					</View>
-					<Text style={styles.title}>Bienvenido de nuevo.</Text>
-					<Text style={styles.subtitle}>Por favor, introduzca sus datos.</Text>
-					<View style={styles.inputContainer}>
-						<CustomInput
-							label="Email"
-							value={email}
-							onChangeText={setEmail}
-							placeholder="ejemplo@correo.com"
-							leftIcon="mail"
-							isLightThemeDefault={true}
-						/>
-					</View>
+				<KeyboardAvoidingView
+					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+					style={{ flex: 1 }}
+				>
+					<ScrollView
+						contentContainerStyle={styles.scrollContent}
+						showsVerticalScrollIndicator={false}
+						keyboardShouldPersistTaps="handled"
+					>
+						<View style={styles.form}>
+							<View style={styles.header}>
+								<Image
+									source={require('../../assets/images/logo-border-white.png')}
+									style={{ width: 250, height: 86, marginRight: -20 }}
+									contentFit="cover"
+								/>
+							</View>
+							<Text style={styles.title}>Bienvenido de nuevo.</Text>
+							<Text style={styles.subtitle}>Por favor, introduzca sus datos.</Text>
+							<View style={styles.inputContainer}>
+								<CustomInput
+									label="Email"
+									value={email}
+									onChangeText={setEmail}
+									placeholder="ejemplo@correo.com"
+									leftIcon="mail"
+									isLightThemeDefault={true}
+								/>
+							</View>
 
-					<View style={styles.inputContainer}>
-						<CustomInput
-							label="Contraseña"
-							value={password}
-							onChangeText={setPassword}
-							placeholder="Introduzca su contraseña"
-							secureTextEntry
-							leftIcon="lock"
-							isLightThemeDefault={true}
-						/>
-					</View>
-					<View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10, marginBottom: 40 }}>
-						<Pressable onPress={() => { }}>
-							<Text style={{ color: '#fff', fontWeight: 'bold', fontFamily: 'SF', }}>¿Olvidaste la contraseña? </Text>
-						</Pressable>
-					</View>
+							<View style={styles.inputContainer}>
+								<CustomInput
+									label="Contraseña"
+									value={password}
+									onChangeText={setPassword}
+									placeholder="Introduzca su contraseña"
+									secureTextEntry
+									leftIcon="lock"
+									isLightThemeDefault={true}
+								/>
+							</View>
+							<View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10, marginBottom: 40 }}>
+								<Pressable onPress={() => { }}>
+									<Text style={{ color: '#fff', fontWeight: 'bold', fontFamily: 'SF', }}>¿Olvidaste la contraseña? </Text>
+								</Pressable>
+							</View>
 
-					<CustomButton
-						title="Iniciar Sesión"
-						variant="outlined"
-						onPress={handleLogin}
-						isLoading={isLoading}
-						style={styles.loginButton}
-					/>
-					<View style={styles.footer}>
-						<Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'SF', }}>¿No tienes cuenta? </Text>
-						<Pressable onPress={() => router.replace('/register')}>
-							<Text style={styles.linkText}>Regístrate</Text>
-						</Pressable>
-					</View>
-					<Pressable style={[styles.fingerprint, { right: width / 2 - 30 }]}>
-						<MaterialIcons name="fingerprint" size={60} color="white" />
-					</Pressable>
-				</View>
-
+							<CustomButton
+								title="Iniciar Sesión"
+								variant="outlined"
+								onPress={handleLogin}
+								isLoading={isLoading}
+								style={styles.loginButton}
+							/>
+							<View style={styles.footer}>
+								<Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'SF', }}>¿No tienes cuenta? </Text>
+								<Pressable onPress={() => router.replace('/register')}>
+									<Text style={styles.linkText}>Regístrate</Text>
+								</Pressable>
+							</View>
+							<View style={styles.fingerprintContainer}>
+								<Pressable style={styles.fingerprint}>
+									<MaterialIcons name="fingerprint" size={60} color="white" />
+								</Pressable>
+							</View>
+						</View>
+					</ScrollView>
+				</KeyboardAvoidingView>
 			</LinearGradient>
 		</View>
 	);
@@ -169,9 +184,12 @@ const styles = StyleSheet.create({
 		flex: 1,
 		width: '100%',
 		paddingHorizontal: 20,
+		paddingTop: 60,
+		paddingBottom: 40,
+	},
+	scrollContent: {
+		flexGrow: 1,
 		justifyContent: 'center',
-		marginTop: -50,
-
 	},
 	inputContainer: {
 		marginBottom: 20,
@@ -211,8 +229,12 @@ const styles = StyleSheet.create({
 		color: '#fff',
 		fontWeight: '600',
 	},
+	fingerprintContainer: {
+		alignItems: 'center',
+		marginTop: 40,
+		marginBottom: 20,
+	},
 	fingerprint: {
-		position: 'absolute',
-		bottom: 60,
+		// Centering handled by fingerprintContainer
 	}
 });
