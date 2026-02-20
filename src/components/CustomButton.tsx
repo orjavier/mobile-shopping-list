@@ -3,10 +3,10 @@ import React from 'react';
 import {
      ActivityIndicator,
      Platform,
+     Pressable,
      StyleSheet,
      Text,
      TextStyle,
-     TouchableOpacity,
      ViewStyle
 } from 'react-native';
 
@@ -94,8 +94,7 @@ const CustomButton = ({
      const variantStyles = getVariantStyles();
 
      return (
-          <TouchableOpacity
-               activeOpacity={0.7}
+          <Pressable
                onPress={onPress}
                disabled={disabled || isLoading}
                style={[
@@ -117,7 +116,7 @@ const CustomButton = ({
                          {title}
                     </Text>
                )}
-          </TouchableOpacity>
+          </Pressable>
      );
 };
 
@@ -144,7 +143,8 @@ const styles = StyleSheet.create({
      },
      text: {
           fontWeight: 'bold',
-          fontSize: 15,
+          fontSize: 17,
+          fontFamily: 'SF',
      },
      disabledButton: {
           backgroundColor: '#cccccc',

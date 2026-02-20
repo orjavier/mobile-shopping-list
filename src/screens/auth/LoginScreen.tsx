@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 
 import {
-	ImageBackground,
 	StatusBar,
 	StyleSheet,
 	TouchableOpacity
@@ -13,7 +12,9 @@ import CustomInput from '@/components/CustomInput';
 import { Text } from '@/components/Themed';
 import { userRepository } from '@/repositories';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/theme';
 import { showToast } from '@/toast';
+import { LinearGradient } from 'expo-linear-gradient';
 import { View } from 'react-native';
 
 export default function LoginScreen() {
@@ -22,6 +23,7 @@ export default function LoginScreen() {
 	const [password, setPassword] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const setAuth = useAuthStore((state) => state.setAuth);
+	const { isDarkMode, color } = useTheme();
 
 	const handleLogin = async () => {
 		if (!email.trim() || !password.trim()) {
@@ -53,57 +55,59 @@ export default function LoginScreen() {
 			setIsLoading(false);
 		}
 	};
-
+	//https://rn-gradient.vercel.app/
 	return (
 		<View style={styles.container}>
-			<View style={styles.body}>
+			<LinearGradient
+				style={styles.container}
+				colors={['#f58300', '#ffc340ff', '#f58300']}
+				start={{ x: 0.07, y: 0.24 }}
+				end={{ x: 0.93, y: 0.76 }}
+			>
 				<StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-				<ImageBackground
-					resizeMode="cover" // or cover
-					style={styles.body}
-					source={require('../../assets/images/background_login.png')}
-				>
+				<View style={styles.form}>
 					<View style={styles.header}>
 						<Text style={styles.title}>Iniciar Sesión</Text>
 					</View>
-					<View style={styles.form}>
-						<View style={styles.inputContainer}>
-							<CustomInput
-								label="Email"
-								value={email}
-								onChangeText={setEmail}
-								placeholder="ejemplo@correo.com"
-								rightIcon="email"
-							/>
-						</View>
-
-						<View style={styles.inputContainer}>
-							<CustomInput
-								label="Contraseña"
-								value={password}
-								onChangeText={setPassword}
-								placeholder="Introduzca su contraseña"
-								secureTextEntry
-								rightIcon="lock"
-							/>
-						</View>
-
-						<CustomButton
-							title="Iniciar Sesión"
-							onPress={handleLogin}
-							isLoading={isLoading}
-							style={styles.loginButton}
+					<View style={styles.inputContainer}>
+						<CustomInput
+							label="Email"
+							value={email}
+							onChangeText={setEmail}
+							placeholder="ejemplo@correo.com"
+							leftIcon="mail"
+							isLightThemeDefault={true}
 						/>
 					</View>
 
+					<View style={styles.inputContainer}>
+						<CustomInput
+							label="Contraseña"
+							value={password}
+							onChangeText={setPassword}
+							placeholder="Introduzca su contraseña"
+							secureTextEntry
+							leftIcon="lock"
+							isLightThemeDefault={true}
+						/>
+					</View>
+
+					<CustomButton
+						title="Iniciar Sesión"
+						variant="outlined"
+						onPress={handleLogin}
+						isLoading={isLoading}
+						style={styles.loginButton}
+					/>
 					<View style={styles.footer}>
-						<Text style={styles.footerText}>¿No tienes cuenta? </Text>
+						<Text style={{ color: isDarkMode ? color.dark.text : color.light.text, fontFamily: 'SF' }}>¿No tienes cuenta? </Text>
 						<TouchableOpacity>
 							<Text style={styles.linkText}>Regístrate</Text>
 						</TouchableOpacity>
 					</View>
-				</ImageBackground>
-			</View>
+				</View>
+
+			</LinearGradient>
 		</View>
 	);
 }
@@ -124,8 +128,8 @@ const styles = StyleSheet.create({
 		marginBottom: 40,
 	},
 	title: {
-		fontSize: 32,
-		fontWeight: 'bold',
+		fontSize: 24,
+		fontFamily: 'SF',
 		marginBottom: 8,
 	},
 	subtitle: {
@@ -133,8 +137,15 @@ const styles = StyleSheet.create({
 		color: '#666',
 	},
 	form: {
+		flex: 1,
 		width: '100%',
 		paddingHorizontal: 20,
+		justifyContent: 'center',
+		// paddingTop: 50,
+		// marginTop: 150,
+		//backgroundColor: 'rgba(255, 255, 255, 0.5)',
+		// borderTopWidth: 1,
+		// borderTopColor: '#fff',
 	},
 	inputContainer: {
 		marginBottom: 20,
@@ -154,6 +165,10 @@ const styles = StyleSheet.create({
 	},
 	loginButton: {
 		marginTop: 10,
+		borderColor: '#FFF',
+		borderWidth: 1,
+		backgroundColor: 'rgba(255, 210, 210, 0.2)',
+		fontFamily: 'SF',
 	},
 	footer: {
 		flexDirection: 'row',

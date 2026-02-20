@@ -1,5 +1,5 @@
 import { useColorScheme } from '@/components/useColorScheme';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { ComponentProps, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -11,18 +11,19 @@ interface CustomInputProps {
      placeholder?: string;
      error?: string;
      secureTextEntry?: boolean;
-     rightIcon?: ComponentProps<typeof MaterialIcons>['name'];
-     onRightIconPress?: () => void;
+     leftIcon?: ComponentProps<typeof Feather>['name'];
+     onLeftIconPress?: () => void;
+     isLightThemeDefault?: boolean;
 }
 
 const CustomInput = ({
-     label,
+     isLightThemeDefault = false,
      value,
      onChangeText,
      placeholder,
      error,
-     rightIcon,
-     onRightIconPress,
+     leftIcon,
+     onLeftIconPress,
      secureTextEntry
 }: CustomInputProps) => {
      const colorScheme = useColorScheme();
@@ -45,17 +46,13 @@ const CustomInput = ({
           }
      };
 
-     const colors = colorScheme === 'dark' ? themeColors.dark : themeColors.light;
+     const colors = isLightThemeDefault ? themeColors.light : colorScheme === 'dark' ? themeColors.dark : themeColors.light;
 
      return (
           <View style={styles.container}>
-               {/* <Text style={[styles.inputLabel, { color: colors.label }]}>
-                    {label}
-               </Text> */}
-
                <BlurView
-                    intensity={colorScheme === 'dark' ? 40 : 0}
-                    tint={colorScheme === 'dark' ? 'dark' : 'default'}
+                    intensity={colorScheme === 'dark' ? 100 : 0}
+                    tint={isLightThemeDefault ? 'default' : colorScheme === 'dark' ? 'dark' : 'default'}
                     style={[
                          styles.inputContainer,
                          focused && styles.inputFocused,
@@ -67,6 +64,15 @@ const CustomInput = ({
                     ]}
                >
                     <View style={styles.inputWrapper}>
+                         {leftIcon && (
+                              <Pressable style={styles.leftIcon} onPress={onLeftIconPress}>
+                                   <Feather
+                                        name={leftIcon}
+                                        size={22}
+                                        color={colors.placeholder}
+                                   />
+                              </Pressable>
+                         )}
                          <TextInput
                               style={[
                                    styles.input,
@@ -85,15 +91,7 @@ const CustomInput = ({
                               selectionColor="#FF803E"
                          />
 
-                         {rightIcon && (
-                              <Pressable style={styles.rightIcon} onPress={onRightIconPress}>
-                                   <MaterialIcons
-                                        name={rightIcon}
-                                        size={22}
-                                        color={colors.label}
-                                   />
-                              </Pressable>
-                         )}
+
                     </View>
                </BlurView>
 
@@ -117,7 +115,7 @@ const styles = StyleSheet.create({
           marginLeft: 4,
      },
      inputContainer: {
-          borderRadius: 12,
+          borderRadius: 50,
           paddingHorizontal: 12,
           height: 56, // Fixed height for consistency
           justifyContent: 'center',
@@ -142,16 +140,22 @@ const styles = StyleSheet.create({
           paddingVertical: 0, // Important for centered text in Android
           // Important: background transparent here but solid on container
           backgroundColor: 'transparent',
+          fontFamily: 'SF',
      },
-     rightIcon: {
-          padding: 8,
-          marginLeft: 4,
+     leftIcon: {
+          //padding: 8,
+          //marginLeft: 2,
      },
      errorText: {
           fontSize: 12,
-          color: '#FF5252',
-          marginTop: 4,
-          marginLeft: 4,
+          color: '#ff0000ff',
+          marginHorizontal: 4,
+          marginVertical: 4,
           fontWeight: '500',
+          backgroundColor: 'rgba(255, 210, 210, 0.2)',
+          padding: 8,
+          borderRadius: 8,
+          width: '50%',
+          margin: 4,
      },
 });
