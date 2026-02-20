@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
           marginLeft: 4,
      },
      inputContainer: {
-          borderRadius: 50,
+          borderRadius: 8,
           paddingHorizontal: 12,
-          height: 56, // Fixed height for consistency
+          height: 45, // Fixed height for consistency
           justifyContent: 'center',
           overflow: 'hidden',
      },

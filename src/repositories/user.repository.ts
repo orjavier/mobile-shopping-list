@@ -8,18 +8,19 @@ export class UserRepository {
     const dto = new LoginDTO(email, password);
     const response = await apiService.post<any>("/auth/login", dto);
 
-    // response ya es: {success, status, message, request_id, data: {token, user}}
-    // response.data = {token, user}
-    if (response.data?.token && response.data?.user) {
+    const userData = response.data?.user || response.data;
+    const token = response.data?.token || response.token;
+
+    if (token && userData?._id) {
       const user = {
-        _id: response.data.user._id || response.data.user.id,
-        firstName: response.data.user.firstName,
-        lastName: response.data.user.lastName,
-        email: response.data.user.email,
-        public_id: response.data.user.public_id,
-        secure_url: response.data.user.secure_url,
+        _id: userData._id || userData.id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        public_id: userData.public_id,
+        secure_url: userData.secure_url,
       };
-      useAuthStore.getState().setAuth(user, response.data.token);
+      useAuthStore.getState().setAuth(user, token);
       return user;
     }
     throw new Error("Invalid response from server");
@@ -34,18 +35,31 @@ export class UserRepository {
     const dto = new RegisterDTO(firstName, lastName, email, password);
     const response = await apiService.post<any>("/auth/register", dto);
 
-    if (response.data?.token && response.data?.user) {
+    console.log("Register response:", JSON.stringify(response.data, null, 2));
+
+    const userData = response.data?.user || response.data;
+
+    if (response.data?.token && userData?._id) {
       const user = {
-        _id: response.data.user._id || response.data.user.id,
-        firstName: response.data.user.firstName,
-        lastName: response.data.user.lastName,
-        email: response.data.user.email,
-        public_id: response.data.user.public_id,
-        secure_url: response.data.user.secure_url,
+        _id: userData._id || userData.id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        public_id: userData.public_id,
+        secure_url: userData.secure_url,
       };
       useAuthStore.getState().setAuth(user, response.data.token);
       return user;
     }
+
+    if (userData?._id || userData?.id) {
+      return userData;
+    }
+
+    if (response.data?.message) {
+      throw new Error(response.data.message);
+    }
+
     throw new Error("Invalid response from server");
   }
 

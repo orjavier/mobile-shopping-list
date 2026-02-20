@@ -1,10 +1,10 @@
+import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-
 import {
+	Pressable,
 	StatusBar,
-	StyleSheet,
-	TouchableOpacity
+	StyleSheet
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
@@ -14,8 +14,9 @@ import { userRepository } from '@/repositories';
 import { useAuthStore } from '@/stores/authStore';
 import { useTheme } from '@/theme';
 import { showToast } from '@/toast';
+import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 
 export default function LoginScreen() {
 	const router = useRouter();
@@ -24,6 +25,7 @@ export default function LoginScreen() {
 	const [isLoading, setIsLoading] = useState(false);
 	const setAuth = useAuthStore((state) => state.setAuth);
 	const { isDarkMode, color } = useTheme();
+	const { width } = Dimensions.get('window');
 
 	const handleLogin = async () => {
 		if (!email.trim() || !password.trim()) {
@@ -60,15 +62,31 @@ export default function LoginScreen() {
 		<View style={styles.container}>
 			<LinearGradient
 				style={styles.container}
-				colors={['#f58300', '#ffc340ff', '#f58300']}
+				colors={['#FF6C37', '#ffc340ff', '#FF6C37']}
 				start={{ x: 0.07, y: 0.24 }}
 				end={{ x: 0.93, y: 0.76 }}
 			>
 				<StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+				<Image
+					source={require('../../assets/SVGs/superior-blob.svg')}
+					style={{ width: 620, height: 426, position: 'absolute', top: -100, right: -180, opacity: 0.2, transform: [{ rotate: '160deg' }] }}
+					contentFit="cover"
+				/>
+				<Image
+					source={require('../../assets/SVGs/inferior-blob.svg')}
+					style={{ width: 550, height: 370, position: 'absolute', bottom: -200, right: -10, opacity: 0.2, }}
+					contentFit="cover"
+				/>
 				<View style={styles.form}>
 					<View style={styles.header}>
-						<Text style={styles.title}>Iniciar Sesión</Text>
+						<Image
+							source={require('../../assets/images/logo-border-white.png')}
+							style={{ width: 250, height: 86, marginRight: -20 }}
+							contentFit="cover"
+						/>
 					</View>
+					<Text style={styles.title}>Bienvenido de nuevo.</Text>
+					<Text style={styles.subtitle}>Por favor, introduzca sus datos.</Text>
 					<View style={styles.inputContainer}>
 						<CustomInput
 							label="Email"
@@ -91,6 +109,11 @@ export default function LoginScreen() {
 							isLightThemeDefault={true}
 						/>
 					</View>
+					<View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10, marginBottom: 40 }}>
+						<Pressable onPress={() => { }}>
+							<Text style={{ color: '#fff', fontWeight: 'bold', fontFamily: 'SF', }}>¿Olvidaste la contraseña? </Text>
+						</Pressable>
+					</View>
 
 					<CustomButton
 						title="Iniciar Sesión"
@@ -100,11 +123,14 @@ export default function LoginScreen() {
 						style={styles.loginButton}
 					/>
 					<View style={styles.footer}>
-						<Text style={{ color: isDarkMode ? color.dark.text : color.light.text, fontFamily: 'SF' }}>¿No tienes cuenta? </Text>
-						<TouchableOpacity>
+						<Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'SF', }}>¿No tienes cuenta? </Text>
+						<Pressable onPress={() => router.replace('/register')}>
 							<Text style={styles.linkText}>Regístrate</Text>
-						</TouchableOpacity>
+						</Pressable>
 					</View>
+					<Pressable style={[styles.fingerprint, { right: width / 2 - 30 }]}>
+						<MaterialIcons name="fingerprint" size={60} color="white" />
+					</Pressable>
 				</View>
 
 			</LinearGradient>
@@ -122,30 +148,30 @@ const styles = StyleSheet.create({
 		height: '100%',
 		justifyContent: 'center',
 		alignItems: 'center',
+
 	},
 	header: {
 		alignItems: 'center',
-		marginBottom: 40,
+		marginBottom: 80,
+		gap: 20,
 	},
 	title: {
 		fontSize: 24,
 		fontFamily: 'SF',
-		marginBottom: 8,
+		fontWeight: 'bold',
 	},
 	subtitle: {
 		fontSize: 16,
-		color: '#666',
+		marginBottom: 50,
+
 	},
 	form: {
 		flex: 1,
 		width: '100%',
 		paddingHorizontal: 20,
 		justifyContent: 'center',
-		// paddingTop: 50,
-		// marginTop: 150,
-		//backgroundColor: 'rgba(255, 255, 255, 0.5)',
-		// borderTopWidth: 1,
-		// borderTopColor: '#fff',
+		marginTop: -50,
+
 	},
 	inputContainer: {
 		marginBottom: 20,
@@ -174,12 +200,19 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'center',
 		marginTop: 30,
+		width: '100%',
 	},
 	footerText: {
 		color: '#666',
+		fontSize: 14,
+
 	},
 	linkText: {
-		color: '#FF803E',
+		color: '#fff',
 		fontWeight: '600',
 	},
+	fingerprint: {
+		position: 'absolute',
+		bottom: 60,
+	}
 });

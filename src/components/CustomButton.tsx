@@ -123,7 +123,7 @@ const CustomButton = ({
 const styles = StyleSheet.create({
      button: {
           height: 50,
-          borderRadius: 25,
+          borderRadius: 8,
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: 20,
