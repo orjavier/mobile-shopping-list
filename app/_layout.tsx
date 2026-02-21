@@ -5,13 +5,20 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { useAuthStore } from '@/stores/authStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export { ErrorBoundary } from 'expo-router';
 
-export const unstable_settings = { initialRouteName: 'onboarding', };
+export const unstable_settings = { 
+  initialRouteName: 'onboarding',
+};
 
 SplashScreen.preventAutoHideAsync();
+
+const ONBOARDING_SEEN_KEY = 'onboarding_seen';
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -20,6 +27,31 @@ export default function RootLayout() {
     SF: require('@/assets/fonts/SFUIText-Light.ttf'),
     ...FontAwesome.font,
   });
+
+  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    const checkInitialRoute = async () => {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem(ONBOARDING_SEEN_KEY);
+        
+        if (isAuthenticated) {
+          setInitialRoute('(tabs)');
+        } else if (hasSeenOnboarding === 'true') {
+          setInitialRoute('login');
+        } else {
+          setInitialRoute('onboarding');
+        }
+      } catch (e) {
+        setInitialRoute('onboarding');
+      }
+    };
+
+    if (loaded) {
+      checkInitialRoute();
+    }
+  }, [loaded, isAuthenticated]);
 
   useEffect(() => {
     if (error) throw error;
@@ -31,28 +63,28 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded || !initialRoute) {
     return null;
   }
 
   return (
     <>
-      <RootLayoutNav />
+      <RootLayoutNav initialRoute={initialRoute} />
       <Toast />
     </>
   );
 }
 
-function RootLayoutNav() {
+function RootLayoutNav({ initialRoute }: { initialRoute: string }) {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

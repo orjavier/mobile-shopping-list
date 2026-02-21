@@ -3,6 +3,7 @@ import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { Image } from "expo-image";
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
      Dimensions,
      FlatList,
@@ -169,7 +170,12 @@ const OnboardingScreen = (): React.ReactElement => {
           }
      };
 
-     const handleGetStarted = (): void => {
+     const handleGetStarted = async (): Promise<void> => {
+          try {
+               await AsyncStorage.setItem('onboarding_seen', 'true');
+          } catch (e) {
+               console.error('Error saving onboarding status:', e);
+          }
           router.replace('/login');
      };
 
