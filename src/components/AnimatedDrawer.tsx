@@ -46,13 +46,13 @@ const DARK = {
 };
 
 const LIGHT = {
-     bg: '#FFFFFF',
+     bg: '#F9FAFB',
      text: '#1A1C1E',
      textMuted: '#707070',
      itemActiveBg: '#FFF1EE', // Soft light orange active bg
      itemText: '#1A1C1E',
      itemActiveText: PRIMARY,
-     iconBgInactive: '#F8F9FA',
+     iconBgInactive: '#FFFFFF',
      iconBgActive: '#FFEBE6',
      divider: '#F1F3F5',
      logoutText: '#64748B',
@@ -148,36 +148,36 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
 
                          <View style={[styles.hDivider, { backgroundColor: C.divider }]} />
 
-                          {/* ── Menu Items ── */}
-                          <View style={styles.menuList}>
-                               {NAV_ITEMS.map((item) => {
-                                    return (
-                                         <TouchableOpacity
-                                              key={item.route}
-                                              onPress={() => handleNavigate(item.route)}
-                                              style={styles.menuItem}
-                                              activeOpacity={0.7}
-                                         >
-                                              <View style={[
-                                                   styles.iconWrap,
-                                                   { backgroundColor: C.iconBgInactive }
-                                              ]}>
-                                                   <MaterialIcons
-                                                        name={item.icon as any}
-                                                        size={22}
-                                                        color={isDark ? '#FFFFFF' : '#444444'}
-                                                   />
-                                              </View>
-                                              <Text style={[
-                                                   styles.menuLabel,
-                                                   { color: C.itemText }
-                                              ]}>
-                                                   {item.label}
-                                              </Text>
-                                         </TouchableOpacity>
-                                    );
-                               })}
-                          </View>
+                         {/* ── Menu Items ── */}
+                         <View style={styles.menuList}>
+                              {NAV_ITEMS.map((item) => {
+                                   return (
+                                        <TouchableOpacity
+                                             key={item.route}
+                                             onPress={() => handleNavigate(item.route)}
+                                             style={styles.menuItem}
+                                             activeOpacity={0.7}
+                                        >
+                                             <View style={[
+                                                  styles.iconWrap,
+                                                  { backgroundColor: C.iconBgInactive }
+                                             ]}>
+                                                  <MaterialIcons
+                                                       name={item.icon as any}
+                                                       size={22}
+                                                       color={isDark ? '#FFFFFF' : '#444444'}
+                                                  />
+                                             </View>
+                                             <Text style={[
+                                                  styles.menuLabel,
+                                                  { color: C.itemText }
+                                             ]}>
+                                                  {item.label}
+                                             </Text>
+                                        </TouchableOpacity>
+                                   );
+                              })}
+                         </View>
 
                          {/* ── Footer ── */}
                          <View style={[styles.footer, !isDark && { borderTopWidth: 1, borderTopColor: C.divider }]}>
@@ -249,6 +249,8 @@ const styles = StyleSheet.create({
           borderRadius: 22, // Circular icon backgrounds
           alignItems: 'center',
           justifyContent: 'center',
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
      },
      menuLabel: { fontSize: 16, fontWeight: '600' },
 

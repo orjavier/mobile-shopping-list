@@ -1,6 +1,7 @@
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import CustomTabBar, { PRIMARY } from '@/components/CustomTabBar';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { ICategory } from '@/interfaces/category.interface';
@@ -9,9 +10,8 @@ import { categoryRepository } from '@/repositories/category.repository';
 import { productRepository } from '@/repositories/product.repository';
 import { showToast } from '@/toast';
 import { Feather } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -28,10 +29,10 @@ import {
 const UNITS = ['Unidad', 'Kilo', 'Medio Kilo', 'Gramo', 'Litro', 'Medio Litro', 'Mililitro', 'Galón', 'Botella', 'Lata', 'Paquete', 'Caja', 'Bolsa', 'Docena'];
 
 const LIGHT = {
-  bg: '#FFFFFF',
+  bg: '#F9FAFB',
   text: '#0F172A',
   textSub: '#64748B',
-  cardBg: '#F1F5F9',
+  cardBg: '#FFFFFF',
   bottomSheetBg: '#FFFFFF',
   handle: '#ddd',
   colorLabel: '#666',
@@ -59,7 +60,7 @@ export default function ProductsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
@@ -68,8 +69,6 @@ export default function ProductsScreen() {
   const [productCategory, setProductCategory] = useState<string | undefined>(undefined);
   const [isUnitModalVisible, setIsUnitModalVisible] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-
-  const snapPoints = useMemo(() => ['50%', '80%'], []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -104,7 +103,7 @@ export default function ProductsScreen() {
     setProductQuantity('1');
     setProductUnit('Unidad');
     setProductCategory(undefined);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.open();
   };
 
   const openEditSheet = (product: IProduct) => {
@@ -114,7 +113,7 @@ export default function ProductsScreen() {
     setProductQuantity(String(product.defaultQuantity || 1));
     setProductUnit(product.defaultUnit || 'Unidad');
     setProductCategory(product.category);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.open();
   };
 
   const closeSheet = () => {
@@ -176,18 +175,6 @@ export default function ProductsScreen() {
       ],
     );
   };
-
-  const renderBackdrop = useCallback(
-    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
-    ),
-    []
-  );
 
   if (isLoading) {
     return (
@@ -268,17 +255,12 @@ export default function ProductsScreen() {
         )}
       </View>
 
-      <BottomSheet
+      <RBSheet
         ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        animateOnMount={false}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: C.bottomSheetBg }]}
-        handleIndicatorStyle={[styles.bottomSheetHandle, { backgroundColor: C.handle }]}
+        height={400}
+        draggable
       >
-        <BottomSheetView style={styles.bottomSheetContent}>
+        <View style={styles.bottomSheetContent}>
           <Text style={[styles.bottomSheetTitle, { color: C.text }]}>
             {editingProduct?._id ? 'Editar Producto' : 'Nuevo Producto'}
           </Text>
@@ -343,8 +325,8 @@ export default function ProductsScreen() {
               style={styles.saveButton}
             />
           </View>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </RBSheet>
 
       {/* ── Custom Tab Bar ── */}
       <CustomTabBar activeRoute="/(tabs)/products" onFabPress={openAddSheet} />

@@ -10,10 +10,10 @@ import { Modal, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Switch, 
 const PRIMARY = '#FF6C37';
 
 const LIGHT = {
-     bg: '#FFFFFF',
+     bg: '#F9FAFB',
      text: '#1F1F1F',
      textSub: '#64748B',
-     cardBg: 'transparent',
+     cardBg: '#FFFFFF',
      iconBg: '#FFF0EE',
      trackOn: '#FF5A33',
      trackOff: '#E9E9EB',

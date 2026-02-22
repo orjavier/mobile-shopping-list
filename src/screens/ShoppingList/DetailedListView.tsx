@@ -55,7 +55,7 @@ const COLLABORATORS = [
 
 // ─── tokens ───────────────────────────────────────────────────────────────────
 const LIGHT = {
-     bg: '#F8F8F8',
+     bg: '#F9FAFB',
      headerBg: '#FFFFFF',
      text: '#0F172A',
      textMuted: '#94A3B8',

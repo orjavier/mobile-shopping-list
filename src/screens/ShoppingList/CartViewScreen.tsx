@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+     FlatList,
      Image,
      Platform,
      RefreshControl,
@@ -17,6 +18,7 @@ import {
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { IItemProduct } from '@/interfaces/item-product.interface';
@@ -26,22 +28,21 @@ import { productRepository } from '@/repositories/product.repository';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const PRIMARY = '#FF6C37';
 
 const LIGHT = {
-     bg: '#F8F8F8',
+     bg: '#F9FAFB',
      headerBg: '#FFFFFF',
      surface: '#FFFFFF',
      border: '#E2E8F0',
      text: '#0F172A',
      textMuted: '#64748B',
      textFaint: '#94A3B8',
-     imgBg: '#F1F5F9',
-     inputBg: '#F1F5F9',
+     imgBg: '#FFFFFF',
+     inputBg: '#FFFFFF',
      inputBorder: '#E2E8F0',
      inputText: '#0F172A',
      footerBg: '#FFFFFF',
@@ -90,15 +91,15 @@ export default function CartViewScreen() {
      const [refreshing, setRefreshing] = useState(false);
      const [items, setItems] = useState<CartItem[]>([]);
 
-     const [products, setProducts] = useState<IProduct[]>([]);
-     const sheetRef = useRef<BottomSheet>(null);
-     const editBsRef = useRef<BottomSheet>(null);
+const [products, setProducts] = useState<IProduct[]>([]);
+     const sheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
+     const editBsRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
      const [searchProduct, setSearchProduct] = useState('');
      const { height: SCREEN_H } = useWindowDimensions();
 
-     const snapPoints = useMemo(() => ['60%', '90%'], []);
-     const editSnapPoints = useMemo(() => ['55%', '90%'], []);
+     const productSheetHeight = useMemo(() => SCREEN_H * 0.7, [SCREEN_H]);
+     const editSheetHeight = useMemo(() => SCREEN_H * 0.55, [SCREEN_H]);
 
      // Edit state
      const [editName, setEditName] = useState('');
@@ -204,7 +205,7 @@ export default function CartViewScreen() {
           setEditName(list.name);
           setEditStatus(list.status || 'open');
           setEditTotalAmount(list.totalAmount?.toString() || '0');
-          editBsRef.current?.expand();
+          editBsRef.current?.open();
      };
 
      const handleSaveEdit = async () => {
@@ -233,25 +234,12 @@ export default function CartViewScreen() {
           p.name.toLowerCase().includes(searchProduct.toLowerCase())
      );
 
-     const total = items.reduce((sum, item) => {
-          const price = item.price || 0;
-          return sum + price * (item.cartQty || 1);
-     }, 0);
+const total = items.reduce((sum, item) => {
+           const price = item.price || 0;
+           return sum + price * (item.cartQty || 1);
+      }, 0);
 
-     const renderBackdrop = useCallback(
-          (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-               <BottomSheetBackdrop
-                    {...props}
-                    pressBehavior="close"
-                    disappearsOnIndex={-1}
-                    appearsOnIndex={0}
-                    opacity={0.55}
-               />
-          ),
-          []
-     );
-
-     const renderProductItem = ({ item }: { item: IProduct }) => (
+      const renderProductItem = ({ item }: { item: IProduct }) => (
           <TouchableOpacity
                style={[s.productItem, { borderColor: C.border }]}
                onPress={() => addProductToList(item)}
@@ -362,7 +350,7 @@ export default function CartViewScreen() {
                               <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
                                    <MaterialIcons name="mic" size={26} color={C.textMuted} />
                               </TouchableOpacity>
-                              <TouchableOpacity style={s.fab} onPress={() => sheetRef.current?.expand()} activeOpacity={0.8}>
+                              <TouchableOpacity style={s.fab} onPress={() => sheetRef.current?.open()} activeOpacity={0.8}>
                                    <MaterialIcons name="add" size={28} color="#fff" />
                               </TouchableOpacity>
 
@@ -389,115 +377,105 @@ export default function CartViewScreen() {
                )
                }
 
-               {/* ── BottomSheet: Agregar productos ── */}
-               <BottomSheet
-                    ref={sheetRef}
-                    index={-1}
-                    snapPoints={snapPoints}
-                    animateOnMount={false}
-                    enablePanDownToClose={true}
-                    backdropComponent={renderBackdrop}
-                    backgroundStyle={[s.sheetBg, { backgroundColor: C.surface }]}
-                    handleIndicatorStyle={{ backgroundColor: C.textFaint, width: 40 }}
-               >
-                    <BottomSheetView style={s.sheetContent}>
-                         <Text style={[s.sheetTitle, { color: C.text }]}>Agregar Productos</Text>
+{/* ── RBSheet: Agregar productos ── */}
+                <RBSheet
+                     ref={sheetRef}
+                     height={productSheetHeight}
+                     draggable
+                >
+                     <View style={s.sheetContent}>
+                          <Text style={[s.sheetTitle, { color: C.text }]}>Agregar Productos</Text>
 
-                         <View style={[s.searchBar, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                              <MaterialIcons name="search" size={20} color={C.textMuted} />
-                              <TextInput
-                                   style={[s.searchInput, { color: C.inputText }]}
-                                   placeholder="Buscar productos..."
-                                   placeholderTextColor={C.textMuted}
-                                   value={searchProduct}
-                                   onChangeText={setSearchProduct}
-                              />
-                         </View>
+                          <View style={[s.searchBar, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
+                               <MaterialIcons name="search" size={20} color={C.textMuted} />
+                               <TextInput
+                                    style={[s.searchInput, { color: C.inputText }]}
+                                    placeholder="Buscar productos..."
+                                    placeholderTextColor={C.textMuted}
+                                    value={searchProduct}
+                                    onChangeText={setSearchProduct}
+                               />
+                          </View>
 
-                         <BottomSheetFlatList
-                              data={filteredProducts}
-                              renderItem={renderProductItem}
-                              keyExtractor={(item: IProduct) => item._id || Math.random().toString()}
-                              contentContainerStyle={s.productList}
-                              showsVerticalScrollIndicator={false}
-                         />
-                    </BottomSheetView>
-               </BottomSheet>
+                          <FlatList
+                               data={filteredProducts}
+                               renderItem={renderProductItem}
+                               keyExtractor={(item: IProduct) => item._id || Math.random().toString()}
+                               contentContainerStyle={s.productList}
+                               showsVerticalScrollIndicator={false}
+                          />
+                     </View>
+                </RBSheet>
 
-               {/* ── BottomSheet: editar lista ── */}
-               <BottomSheet
-                    ref={editBsRef}
-                    index={-1}
-                    snapPoints={editSnapPoints}
-                    animateOnMount={false}
-                    enablePanDownToClose={true}
-                    backdropComponent={renderBackdrop}
-                    backgroundStyle={[s.sheetBg, { backgroundColor: C.surface }]}
-                    handleIndicatorStyle={{ backgroundColor: C.textFaint, width: 40 }}
-               >
-                    <BottomSheetView style={s.sheetContent}>
-                         <Text style={[s.sheetTitle, { color: C.text }]}>Editar Lista</Text>
+{/* ── RBSheet: editar lista ── */}
+                <RBSheet
+                     ref={editBsRef}
+                     height={editSheetHeight}
+                     draggable
+                >
+                     <View style={s.sheetContent}>
+                          <Text style={[s.sheetTitle, { color: C.text }]}>Editar Lista</Text>
 
-                         {/* nombre */}
-                         <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
-                         <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                              <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
-                              <BottomSheetTextInput
-                                   style={[s.editInput, { color: C.inputText }]}
-                                   value={editName}
-                                   onChangeText={setEditName}
-                                   placeholder="Nombre de la lista"
-                                   placeholderTextColor={C.textMuted}
-                              />
-                         </View>
+                          {/* nombre */}
+                          <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
+                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
+                               <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
+                               <TextInput
+                                    style={[s.editInput, { color: C.inputText }]}
+                                    value={editName}
+                                    onChangeText={setEditName}
+                                    placeholder="Nombre de la lista"
+                                    placeholderTextColor={C.textMuted}
+                               />
+                          </View>
 
-                         {/* status */}
-                         <Text style={[s.inputLabel, { color: C.textMuted }]}>ESTADO</Text>
-                         <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                              <MaterialIcons name="flag" size={18} color={C.textMuted} />
-                              <BottomSheetTextInput
-                                   style={[s.editInput, { color: C.inputText }]}
-                                   value={editStatus === 'open' ? 'Abierta' : 'Cerrada'}
-                                   readOnly
-                                   onChangeText={(text) => setEditStatus(text === 'open' || text === 'closed' ? text : 'open')}
-                                   placeholder="Abierta o Cerrada"
-                                   placeholderTextColor={C.textMuted}
-                              />
-                         </View>
+                          {/* status */}
+                          <Text style={[s.inputLabel, { color: C.textMuted }]}>ESTADO</Text>
+                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
+                               <MaterialIcons name="flag" size={18} color={C.textMuted} />
+                               <TextInput
+                                    style={[s.editInput, { color: C.inputText }]}
+                                    value={editStatus === 'open' ? 'Abierta' : 'Cerrada'}
+                                    readOnly
+                                    onChangeText={(text: string) => setEditStatus(text === 'open' || text === 'closed' ? text : 'open')}
+                                    placeholder="Abierta o Cerrada"
+                                    placeholderTextColor={C.textMuted}
+                               />
+                          </View>
 
-                         {/* total amount */}
-                         <Text style={[s.inputLabel, { color: C.textMuted }]}>MONTO TOTAL</Text>
-                         <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                              <MaterialIcons name="attach-money" size={18} color={C.textMuted} />
-                              <BottomSheetTextInput
-                                   style={[s.editInput, { color: C.inputText }]}
-                                   value={editTotalAmount}
-                                   readOnly
-                                   onChangeText={setEditTotalAmount}
-                                   placeholder="0.00"
-                                   placeholderTextColor={C.textMuted}
-                                   keyboardType="decimal-pad"
-                              />
-                         </View>
+                          {/* total amount */}
+                          <Text style={[s.inputLabel, { color: C.textMuted }]}>MONTO TOTAL</Text>
+                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
+                               <MaterialIcons name="attach-money" size={18} color={C.textMuted} />
+                               <TextInput
+                                    style={[s.editInput, { color: C.inputText }]}
+                                    value={editTotalAmount}
+                                    readOnly
+                                    onChangeText={setEditTotalAmount}
+                                    placeholder="0.00"
+                                    placeholderTextColor={C.textMuted}
+                                    keyboardType="decimal-pad"
+                               />
+                          </View>
 
-                         {/* buttons */}
-                         <View style={s.sheetBtns}>
-                              <CustomButton
-                                   title="Cancelar"
-                                   variant="outlined"
-                                   onPress={() => editBsRef.current?.close()}
-                                   style={{ flex: 1 }}
-                              />
-                              <CustomButton
-                                   title={saving ? 'Guardando...' : 'Guardar'}
-                                   variant="primary"
-                                   onPress={handleSaveEdit}
-                                   isLoading={saving}
-                                   style={{ flex: 1 }}
-                              />
-                         </View>
-                    </BottomSheetView>
-               </BottomSheet>
+                          {/* buttons */}
+                          <View style={s.sheetBtns}>
+                               <CustomButton
+                                    title="Cancelar"
+                                    variant="outlined"
+                                    onPress={() => editBsRef.current?.close()}
+                                    style={{ flex: 1 }}
+                               />
+                               <CustomButton
+                                    title={saving ? 'Guardando...' : 'Guardar'}
+                                    variant="primary"
+                                    onPress={handleSaveEdit}
+                                    isLoading={saving}
+                                    style={{ flex: 1 }}
+                               />
+                          </View>
+                     </View>
+                </RBSheet>
           </View >
      );
 }
@@ -514,7 +492,7 @@ const s = StyleSheet.create({
      itemWrapper: { marginBottom: 16 },
      itemRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
      checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-     imgBox: { width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+     imgBox: { width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 , backgroundColor: '#FFFFFF',  shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      img: { width: '100%', height: '100%' },
      info: { flex: 1, gap: 1 },
      price: { fontSize: 16, fontWeight: '700' },
@@ -540,7 +518,7 @@ const s = StyleSheet.create({
      searchInput: { flex: 1, fontSize: 14, padding: 0, margin: 0 },
      productList: { paddingBottom: 20 },
      productItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
-     productImg: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+     productImg: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' , backgroundColor: '#FFFFFF',  shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      productImgInner: { width: '100%', height: '100%', borderRadius: 12 },
      productInfo: { flex: 1 },
      productName: { fontSize: 14, fontWeight: '600' },

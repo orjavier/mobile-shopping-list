@@ -2,7 +2,7 @@
  * ShoppingListOverView — Shopping Lists from backend
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
   RefreshControl,
@@ -11,12 +11,12 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
@@ -24,19 +24,14 @@ import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 
 // ─── tokens ───────────────────────────────────────────────────────────────────
 const LIGHT = {
   bg: '#F9FAFB',
-  headerBg: 'rgba(249,250,251,0.88)',
-  searchBg: '#F1F5F9',
+  headerBg: '#FFFFFF',
+  searchBg: '#FFFFFF',
   text: '#0F172A',
   textMuted: '#64748B',
   textSub: '#94A3B8',
@@ -45,7 +40,7 @@ const LIGHT = {
   cardBorder: 'rgba(0,0,0,0.04)',
   chevron: '#CBD5E1',
   btn: PRIMARY,
-  inputBg: '#F1F5F9',
+  inputBg: '#FFFFFF',
   inputBorder: '#E2E8F0',
   inputText: '#0F172A',
 };
@@ -104,10 +99,7 @@ export default function ShoppingListOverView() {
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
 
-  const bsRef = useRef<BottomSheet>(null);
-  const { height: SCREEN_H } = useWindowDimensions();
-  //const snapPoints = useMemo(() => [Math.round(SCREEN_H * 0.42)], [SCREEN_H]);
-  const snapPoints = useMemo(() => ['50%'], []);
+  const bsRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
   const fetchLists = useCallback(async () => {
     if (!user?._id) return;
@@ -133,7 +125,7 @@ export default function ShoppingListOverView() {
 
   const openSheet = () => {
     setNewName('');
-    bsRef.current?.expand();
+    bsRef.current?.open();
   };
 
   const handleCreate = async () => {
@@ -164,18 +156,6 @@ export default function ShoppingListOverView() {
   const handleDelete = (item: IShoppingList) => {
     // TODO: Implement delete
   };
-
-  const renderBackdrop = useCallback(
-    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.55}
-      />
-    ),
-    []
-  );
 
   const filteredLists = lists
     .filter((l) => l.name.toLowerCase().includes(search.toLowerCase()))
@@ -275,20 +255,13 @@ export default function ShoppingListOverView() {
         )}
       </ScrollView>
 
-      {/* BottomSheet: nueva lista */}
-      <BottomSheet
+      {/* RBSheet: nueva lista */}
+      <RBSheet
         ref={bsRef}
-        index={-1}
-        animateOnMount={false}
-        enablePanDownToClose={true}
-        snapPoints={['50%']}  // ← SOLO esta línea
-        backdropComponent={renderBackdrop}
-        backgroundStyle={[s.sheetBg, { backgroundColor: C.card }]}
-        handleIndicatorStyle={{ backgroundColor: C.textSub, width: 40, opacity: 0.35 }}
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
+        height={350}
+        draggable
       >
-        <BottomSheetView style={s.sheetContent}>
+        <View style={s.sheetContent}>
           <View style={s.sheetHeader}>
             <Text style={[s.sheetTitle, { color: C.text }]}>Nueva Lista</Text>
             <TouchableOpacity
@@ -302,7 +275,7 @@ export default function ShoppingListOverView() {
           <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
           <View style={[s.inputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
             <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
-            <BottomSheetTextInput
+            <TextInput
               style={[s.bsInput, { color: C.inputText }]}
               value={newName}
               onChangeText={setNewName}
@@ -328,8 +301,8 @@ export default function ShoppingListOverView() {
               style={{ flex: 1 }}
             />
           </View>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </RBSheet>
 
       <CustomTabBar activeRoute="/(tabs)/lists" onFabPress={openSheet} />
     </View>

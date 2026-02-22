@@ -6,12 +6,13 @@
  */
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { MaterialIcons } from '@react-native-vector-icons/material-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Dimensions, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
+import { Dimensions, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Themed';
+import { Feather } from '@expo/vector-icons';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 export const PRIMARY = '#FF6C37';
@@ -40,8 +41,8 @@ interface Tab {
 }
 
 const TABS_L: Tab[] = [
-     { icon: 'grid-view', label: 'Home', route: '/(tabs)' },
-     { icon: 'view-list', label: 'Shopping List', route: '/(tabs)/lists' },
+     { icon: 'home', label: 'Home', route: '/(tabs)' },
+     { icon: 'list', label: 'Shopping List', route: '/(tabs)/lists' },
 ];
 
 const TABS_R: Tab[] = [
@@ -51,8 +52,8 @@ const TABS_R: Tab[] = [
 
 // ─── theme tokens ─────────────────────────────────────────────────────────────
 const LIGHT_TB = {
-     tabText: 'rgba(255,255,255,0.72)',
-     tabActive: '#FFFFFF',
+     tabText: 'rgba(49, 49, 49, 0.72)',
+     tabActive: PRIMARY,
      fabCenter: '#FFFFFF',
 };
 const DARK_TB = {
@@ -71,21 +72,24 @@ export interface CustomTabBarProps {
 
 export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarProps) {
      const router = useRouter();
+     const pathname = usePathname();
      const scheme = useColorScheme();
      const isDark = scheme === 'dark';
      const C = isDark ? DARK_TB : LIGHT_TB;
 
-     const handleFab = onFabPress ?? (() => router.push('/(tabs)/lists' as never));
+     const isHome = pathname === '/' || pathname === '/(tabs)';
+     const handleFab = isHome
+          ? () => { }
+          : (onFabPress ?? (() => router.push('/(tabs)/lists' as never)));
      const isActive = (r: TabRoute) => activeRoute === r;
 
      const renderTab = (tab: Tab) => (
-          <TouchableOpacity
+          <Pressable
                key={tab.route}
                style={tb.tabBtn}
                onPress={() => router.push(tab.route as never)}
-               activeOpacity={0.7}
           >
-               <MaterialIcons
+               <Feather
                     name={tab.icon as never}
                     size={22}
                     color={isActive(tab.route) ? C.tabActive : C.tabText}
@@ -97,13 +101,17 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                ]}>
                     {tab.label}
                </Text>
-          </TouchableOpacity>
+          </Pressable>
      );
 
      return (
           <View style={tb.root} pointerEvents="box-none">
                {/* ── orange bar ── */}
-               <View style={[tb.bar, { shadowColor: PRIMARY }]}>
+               <View style={[tb.bar, { shadowColor: '#000' }, {
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.1)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#fff',
+               }]}>
                     <View style={tb.half}>{TABS_L.map(renderTab)}</View>
                     <View style={tb.centerGap} />
                     <View style={tb.half}>{TABS_R.map(renderTab)}</View>
@@ -111,17 +119,37 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
 
                {/* ── FAB (floats above the bar center) ── */}
                <View style={tb.fabWrap}>
-                    <View style={[tb.fabOuter, { backgroundColor: C.fabCenter, borderColor: 'transparent' }]}>
-                         <TouchableOpacity style={tb.fabTouch} onPress={handleFab} activeOpacity={0.85}>
-                              <LinearGradient
-                                   colors={['#FF8C5A', PRIMARY]}
-                                   start={{ x: 0, y: 0 }}
-                                   end={{ x: 1, y: 1 }}
-                                   style={tb.fabGrad}
-                              >
-                                   <MaterialIcons name="add" size={26} color="#fff" />
-                              </LinearGradient>
-                         </TouchableOpacity>
+                    <View style={[tb.fabOuter, {
+                         backgroundColor: C.fabCenter,
+                         borderColor: 'transparent',
+                         shadowColor: isDark ? '#ffffffff' : '#000',
+                         shadowOffset: { width: 0, height: 2 },
+                         shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5
+                    }]}>
+                         <Pressable style={tb.fabTouch} onPress={handleFab}>
+                              {isHome ? (
+                                   <LinearGradient
+                                        colors={['#FF8C5A', PRIMARY]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={tb.fabGrad}
+                                   >
+                                        <Image
+                                             source={require('../assets/SVGs/simple-white-logo.svg')}
+                                             style={{ width: 32, height: 32 }}
+                                        />
+                                   </LinearGradient>
+                              ) : (
+                                   <LinearGradient
+                                        colors={['#FF8C5A', PRIMARY]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={tb.fabGrad}
+                                   >
+                                        <Feather name="plus" size={26} color="#fff" />
+                                   </LinearGradient>
+                              )}
+                         </Pressable>
                     </View>
                </View>
           </View>
@@ -141,7 +169,7 @@ const tb = StyleSheet.create({
      bar: {
           width: W - 20,
           height: TAB_H,
-          backgroundColor: PRIMARY,
+          //backgroundColor: '#fff',
           borderTopLeftRadius: 50,
           borderTopRightRadius: 50,
           borderBottomLeftRadius: 50,
@@ -151,10 +179,7 @@ const tb = StyleSheet.create({
           alignItems: 'center',
           paddingHorizontal: 8,
           paddingBottom: TAB_BOTTOM_EXTRA,
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.22,
-          shadowRadius: 16,
-          elevation: 20,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2
 
      },
      half: {
@@ -180,11 +205,7 @@ const tb = StyleSheet.create({
           borderWidth: 3,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.18,
           shadowRadius: 10,
-          elevation: 12,
      },
      fabTouch: {
           width: FAB_D,
@@ -193,4 +214,5 @@ const tb = StyleSheet.create({
           overflow: 'hidden',
      },
      fabGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+     fabIcon: { width: 32, height: 32, tintColor: '#fff' },
 });

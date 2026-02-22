@@ -6,12 +6,8 @@
  * CustomTabBar existente + BottomSheet para crear lista
  */
 
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -19,6 +15,7 @@ import {
   RefreshControl,
   StatusBar,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -48,7 +45,7 @@ const LIGHT = {
   cardBorder: 'rgba(0,0,0,0.04)',
   chevron: '#CBD5E1',
   sheetBg: '#FFFFFF',
-  inputBg: '#F1F5F9',
+  inputBg: '#FFFFFF',
   inputBorder: '#E2E8F0',
   inputText: '#0F172A',
   cancelBg: '#F1F5F9',
@@ -157,10 +154,8 @@ export default function ShoppingListsScreen() {
   const [editTotalAmount, setEditTotalAmount] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const bsRef = useRef<BottomSheet>(null);
-  const editBsRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['40%'], []);
-  const editSnapPoints = useMemo(() => ['60%'], []);
+  const bsRef = useRef<{ open: () => void; close: () => void } | null>(null);
+  const editBsRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
   // ─── fetch ─────────────────────────────────────────────────────────────────
   const fetchLists = useCallback(async () => {
@@ -180,7 +175,7 @@ export default function ShoppingListsScreen() {
   const onRefresh = () => { setRefreshing(true); fetchLists(); };
 
   // ─── create ────────────────────────────────────────────────────────────────
-  const openSheet = () => { setNewName(''); bsRef.current?.expand(); };
+  const openSheet = () => { setNewName(''); bsRef.current?.open(); };
 
   const handleCreate = async () => {
     const name = newName.trim();
@@ -224,7 +219,7 @@ export default function ShoppingListsScreen() {
     setEditName(item.name);
     setEditStatus(item.status || 'open');
     setEditTotalAmount(item.totalAmount?.toString() || '0');
-    editBsRef.current?.expand();
+    editBsRef.current?.open();
   };
 
   const handleSaveEdit = async () => {
@@ -248,12 +243,6 @@ export default function ShoppingListsScreen() {
       setSaving(false);
     }
   };
-
-  const renderBackdrop = useCallback(
-    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.55} pressBehavior="close" />
-    ), []
-  );
 
   // ─── split lists ───────────────────────────────────────────────────────────
   // "recommendations" = first 1 item (or a static set if empty) · rest = "recently created"
@@ -354,19 +343,13 @@ export default function ShoppingListsScreen() {
       {/* ── CustomTabBar ── */}
       <CustomTabBar activeRoute="/(tabs)/lists" onFabPress={openSheet} />
 
-      {/* ── BottomSheet: nueva lista ── */}
-      <BottomSheet
+      {/* ── RBSheet: nueva lista ── */}
+      <RBSheet
         ref={bsRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={[s.sheetBg, { backgroundColor: C.sheetBg }]}
-        handleIndicatorStyle={{ backgroundColor: C.textSub, width: 40, opacity: 0.35 }}
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
+        height={350}
+        draggable
       >
-        <BottomSheetView style={s.sheetContent}>
+        <View style={s.sheetContent}>
           {/* header */}
           <View style={s.sheetHeader}>
             <Text style={[s.sheetTitle, { color: C.text }]}>Nueva Lista</Text>
@@ -379,7 +362,7 @@ export default function ShoppingListsScreen() {
           <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
           <View style={[s.inputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
             <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
-            <BottomSheetTextInput
+            <TextInput
               style={[s.bsInput, { color: C.inputText }]}
               value={newName}
               onChangeText={setNewName}
@@ -408,8 +391,8 @@ export default function ShoppingListsScreen() {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </RBSheet>
 
 
     </View>

@@ -6,10 +6,9 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { categoryRepository } from '@/repositories/category.repository';
 import { showToast } from '@/toast';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,8 +16,9 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import RBSheet from 'react-native-raw-bottom-sheet';
 
 const COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
@@ -26,10 +26,10 @@ const COLORS = [
 ];
 
 const LIGHT = {
-  bg: '#FFFFFF',
+  bg: '#F9FAFB',
   text: '#0F172A',
   textSub: '#64748B',
-  cardBg: '#F1F5F9',
+  cardBg: '#FFFFFF',
   bottomSheetBg: '#FFFFFF',
   handle: '#ddd',
   colorLabel: '#666',
@@ -37,7 +37,7 @@ const LIGHT = {
 
 const DARK = {
   bg: '#0F0F0F',
-  text: '#F1F5F9',
+  text: 'rgba(77, 77, 77, 0.5)',
   textSub: '#94A3B8',
   cardBg: 'rgba(255,255,255,0.06)',
   bottomSheetBg: '#1C1C1E',
@@ -56,12 +56,10 @@ export default function CategoriesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
   const [categoryName, setCategoryName] = useState('');
   const [categoryColor, setCategoryColor] = useState(COLORS[0]);
-
-  const snapPoints = useMemo(() => ['50%', '80%'], []);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -89,14 +87,14 @@ export default function CategoriesScreen() {
     setEditingCategory(null);
     setCategoryName('');
     setCategoryColor(COLORS[Math.floor(Math.random() * COLORS.length)]);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.open();
   };
 
   const openEditSheet = (category: ICategory) => {
     setEditingCategory(category);
     setCategoryName(category.name);
     setCategoryColor(category.color);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.open();
   };
 
   const closeSheet = () => {
@@ -157,18 +155,6 @@ export default function CategoriesScreen() {
     );
   };
 
-  const renderBackdrop = useCallback(
-    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
-    ),
-    []
-  );
-
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
@@ -225,18 +211,13 @@ export default function CategoriesScreen() {
         )}
       </View>
 
-      <BottomSheet
+      <RBSheet
         ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        animateOnMount={false}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: C.bottomSheetBg }]}
-        handleIndicatorStyle={[styles.bottomSheetHandle, { backgroundColor: C.handle }]}
+        height={350}
+        draggable
       >
-        <BottomSheetView style={styles.bottomSheetContent}>
-          <Text style={[styles.bottomSheetTitle, { color: C.text }]}>
+        <View style={styles.bottomSheetContent}>
+          <Text style={[styles.bottomSheetTitle, { color: isDark ? C.colorLabel : C.colorLabel }]}>
             {editingCategory?._id ? 'Editar Categoría' : 'Nueva Categoría'}
           </Text>
 
@@ -280,8 +261,8 @@ export default function CategoriesScreen() {
               style={styles.saveButton}
             />
           </View>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </RBSheet>
 
       {/* ── Custom Tab Bar ── */}
       <CustomTabBar activeRoute="/(tabs)/categories" onFabPress={openAddSheet} />
@@ -344,6 +325,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   categoryName: {
     flex: 1,
@@ -364,7 +346,6 @@ const styles = StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
   },

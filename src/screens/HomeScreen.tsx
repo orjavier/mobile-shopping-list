@@ -1,15 +1,15 @@
+import { Image } from "expo-image";
 import { useCallback, useEffect, useState } from 'react';
 import {
      Dimensions,
      FlatList,
-     Image,
      Platform,
+     Pressable,
      RefreshControl,
      ScrollView,
      StatusBar,
      StyleSheet,
      TextInput,
-     TouchableOpacity,
      View
 } from 'react-native';
 
@@ -25,6 +25,7 @@ import { productRepository } from '@/repositories/product.repository';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
+import { Feather } from '@expo/vector-icons';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 
@@ -32,21 +33,21 @@ import { useRouter } from 'expo-router';
 const { width: W } = Dimensions.get('window');
 
 const LIGHT = {
-     bg: '#FFFFFF',
+     bg: '#F9FAFB',
      surface: '#FFFFFF',
-     headerBg: 'rgba(255,255,255,0.88)',
-     searchBg: '#F1F5F9',
+     headerBg: '#FFFFFF',
+     searchBg: '#FFFFFF',
      text: '#0F172A',
      textMuted: '#64748B',
      textSub: '#94A3B8',
      sectionTitle: '#0F172A',
-     listCard: '#FFF7F3',
+     listCard: '#FFFFFF',
      listCardBorder: '#FFE4D6',
-     listCardIconBg: `${PRIMARY}28`,
-     catCardBg: '#F1F5F9',
+     listCardIconBg: '#FFFFFF',
+     catCardBg: '#FFFFFF',
      productCard: '#FFFFFF',
      productCardBorder: '#F1F5F9',
-     productBg: '#F8FAFC',
+     productBg: '#FFFFFF',
      statusOpen: '#22C55E',
      statusOpenBg: '#DCFCE7',
 };
@@ -133,10 +134,9 @@ export default function HomeScreen() {
      const ListCard = ({ item }: { item: IShoppingList }) => {
           const open = item.status === 'open';
           return (
-               <TouchableOpacity
+               <Pressable
                     style={[s.lCard, { backgroundColor: C.listCard, borderColor: C.listCardBorder }]}
                     onPress={() => router.push('/(tabs)/lists' as never)}
-                    activeOpacity={0.75}
                >
                     <View style={[s.lIcon, { backgroundColor: C.listCardIconBg }]}>
                          <MaterialIcons name="shopping-cart" size={20} color={PRIMARY} />
@@ -150,28 +150,26 @@ export default function HomeScreen() {
                               <Text style={[s.openDot, { color: C.statusOpen }]}>●</Text>
                          </View>
                     )}
-               </TouchableOpacity>
+               </Pressable>
           );
      };
 
      const CatChip = ({ cat }: { cat: ICategory }) => (
-          <TouchableOpacity
+          <Pressable
                style={s.catChip}
                onPress={() => router.push('/(tabs)/categories' as never)}
-               activeOpacity={0.75}
           >
                <View style={[s.catBox, { backgroundColor: C.catCardBg }]}>
                     <Text style={s.catEmoji}>{emojiFor(cat.name)}</Text>
                </View>
                <Text style={[s.catLabel, { color: C.textMuted }]} numberOfLines={1}>{cat.name}</Text>
-          </TouchableOpacity>
+          </Pressable>
      );
 
      const ProdCard = ({ prod }: { prod: IProduct }) => (
-          <TouchableOpacity
+          <Pressable
                style={[s.pCard, { backgroundColor: C.productCard, borderColor: C.productCardBorder }]}
                onPress={() => router.push('/(tabs)/products' as never)}
-               activeOpacity={0.8}
           >
                <View style={[s.pImgWrap, { backgroundColor: C.productBg }]}>
                     {prod.secure_url
@@ -186,7 +184,7 @@ export default function HomeScreen() {
                          {prod.defaultPrice != null ? fmt(prod.defaultPrice) : '—'}
                     </Text>
                </View>
-          </TouchableOpacity>
+          </Pressable>
      );
 
      // ─── loading ───────────────────────────────────────────────────────────────
@@ -209,16 +207,28 @@ export default function HomeScreen() {
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
                {/* ── Sticky Header ── */}
-               <View style={[s.header, { backgroundColor: C.headerBg }]}>
+               <View style={s.header}>
                     <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
-                    <View style={s.headerRow}>
-                         <Text style={[s.hTitle, { color: C.sectionTitle }]}></Text>
-                         <TouchableOpacity onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9' }]}>
-                              <MaterialIcons name="menu" size={24} color={C.text} />
-                         </TouchableOpacity>
+                    <View style={[s.headerRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Image
+                                   source={require('../assets/SVGs/simple-logo.svg')}
+                                   style={{ width: 32, height: 32 }}
+                                   contentFit="cover"
+                              />
+                              <Text style={[s.hTitle, { color: C.sectionTitle }]}>Lista de Compras</Text>
+                         </View>
+                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Pressable onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                                   <Feather name="bell" size={24} color={C.text} />
+                              </Pressable>
+                              <Pressable onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                                   <Feather name="menu" size={24} color={C.text} />
+                              </Pressable>
+                         </View>
                     </View>
                     <View style={[s.searchBar, { backgroundColor: C.searchBg }]}>
-                         <MaterialIcons name="search" size={20} color={C.textSub} />
+                         <Feather name="search" size={20} color={C.textSub} />
                          <TextInput
                               style={[s.searchInput, { color: C.text }]}
                               placeholder="Buscar productos, categorías, o listas"
@@ -227,9 +237,9 @@ export default function HomeScreen() {
                               onChangeText={setSearch}
                          />
                          {search.length > 0 && (
-                              <TouchableOpacity onPress={() => setSearch('')}>
-                                   <MaterialIcons name="close" size={17} color={C.textMuted} />
-                              </TouchableOpacity>
+                              <Pressable onPress={() => setSearch('')}>
+                                   <Feather name="x" size={17} color={C.textMuted} />
+                              </Pressable>
                          )}
                     </View>
                </View>
@@ -247,9 +257,9 @@ export default function HomeScreen() {
                     <View style={s.section}>
                          <View style={s.secHead}>
                               <Text style={[s.secTitle, { color: C.sectionTitle }]}>Listas recientes</Text>
-                              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/lists' as never)}>
+                              <Pressable onPress={() => router.push('/(tabs)/lists' as never)}>
                                    <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
-                              </TouchableOpacity>
+                              </Pressable>
                          </View>
                          {filtered.length === 0 ? (
                               <View style={s.emptyRow}>
@@ -276,9 +286,9 @@ export default function HomeScreen() {
                          <View style={s.section}>
                               <View style={s.secHead}>
                                    <Text style={[s.secTitle, { color: C.sectionTitle }]}>Categorias recientes</Text>
-                                   <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/categories' as never)}>
+                                   <Pressable onPress={() => router.push('/(tabs)/categories' as never)}>
                                         <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
-                                   </TouchableOpacity>
+                                   </Pressable>
                               </View>
                               <View style={s.catRow}>
                                    {categories.slice(0, 4).map((c) => (
@@ -293,9 +303,9 @@ export default function HomeScreen() {
                          <View style={s.section}>
                               <View style={s.secHead}>
                                    <Text style={[s.secTitle, { color: C.sectionTitle }]}>Productos recientes</Text>
-                                   <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/products' as never)}>
+                                   <Pressable onPress={() => router.push('/(tabs)/products' as never)}>
                                         <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todos</Text>
-                                   </TouchableOpacity>
+                                   </Pressable>
                               </View>
                               <View style={s.prodGrid}>
                                    {products.slice(0, 4).map((p) => (
@@ -329,19 +339,17 @@ const s = StyleSheet.create({
      header: {
           paddingHorizontal: 20,
           paddingBottom: 14,
+          marginTop: 14,
           zIndex: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
           elevation: 4,
      },
-     hTitle: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5, marginBottom: 12 },
+     hTitle: { fontSize: 22, letterSpacing: -0.5, },
      headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
      menuBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
      searchBar: {
           flexDirection: 'row', alignItems: 'center',
-          borderRadius: 18, paddingHorizontal: 14, paddingVertical: 13, gap: 10, marginTop: 14,
+          borderRadius: 8, paddingHorizontal: 14, paddingVertical: 13, gap: 10, marginTop: 14,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2
      },
      searchInput: { flex: 1, fontSize: 14, padding: 0, margin: 0 },
 
@@ -361,7 +369,7 @@ const s = StyleSheet.create({
      hList: { paddingHorizontal: 20, gap: 14 },
 
      lCard: { width: 148, padding: 14, borderRadius: 20, borderWidth: 1, gap: 10 },
-     lIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+     lIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      lBody: { gap: 3 },
      lName: { fontSize: 13, fontWeight: '700', letterSpacing: -0.2 },
      lMeta: { fontSize: 11 },
@@ -373,7 +381,7 @@ const s = StyleSheet.create({
 
      catRow: { flexDirection: 'row', justifyContent: 'space-between' },
      catChip: { flex: 1, alignItems: 'center', gap: 6, paddingHorizontal: 4 },
-     catBox: { width: 62, height: 62, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+     catBox: { width: 62, height: 62, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      catEmoji: { fontSize: 28 },
      catLabel: { fontSize: 11, fontWeight: '500', textAlign: 'center' },
 
@@ -382,7 +390,7 @@ const s = StyleSheet.create({
           width: PROD_COL_W, flexDirection: 'row', alignItems: 'center',
           borderRadius: 18, borderWidth: 1, padding: 10, gap: 10,
      },
-     pImgWrap: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+     pImgWrap: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      pImg: { width: '100%', height: '100%' },
      pEmoji: { fontSize: 24 },
      pInfo: { flex: 1, gap: 2 },
