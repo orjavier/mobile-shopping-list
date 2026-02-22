@@ -1,1 +1,2 @@
-export { default } from '@/screens/ShoppingListsScreen';
+export { default } from '@/screens/HomeScreen';
+

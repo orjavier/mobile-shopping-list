@@ -1,3 +1,14 @@
+import CustomButton from '@/components/CustomButton';
+import CustomInput from '@/components/CustomInput';
+import CustomTabBar from '@/components/CustomTabBar';
+import { Text } from '@/components/Themed';
+import { IProduct } from '@/interfaces/product.interface';
+import { productRepository } from '@/repositories/product.repository';
+import { showToast } from '@/toast';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import { MaterialIcons } from '@react-native-vector-icons/material-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,16 +19,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Text } from '@/components/Themed';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
-import { IProduct } from '@/interfaces/product.interface';
-import { productRepository } from '@/repositories/product.repository';
-import { showToast } from '@/toast';
-import { MaterialIcons } from '@react-native-vector-icons/material-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import CustomButton from '@/components/CustomButton';
-import CustomInput from '@/components/CustomInput';
 
 const UNITS = ['unid', 'kg', 'g', 'lb', 'oz', 'l', 'ml', 'pack'];
 
@@ -27,7 +28,7 @@ export default function ProductsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [productName, setProductName] = useState('');
@@ -284,6 +285,9 @@ export default function ProductsScreen() {
           </View>
         </BottomSheetView>
       </BottomSheet>
+
+      {/* ── Custom Tab Bar ── */}
+      <CustomTabBar activeRoute="/(tabs)/products" />
     </LinearGradient>
   );
 }

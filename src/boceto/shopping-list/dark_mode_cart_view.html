@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Light Mode Cart View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#fa733d",
+                        "background-light": "#f8f6f5",
+                        "background-dark": "#23150f",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white font-display text-slate-900">
+<!-- Main Container (Phone Mockup Style) -->
+<div class="relative flex h-screen w-full max-w-[430px] mx-auto flex-col bg-white overflow-hidden shadow-2xl">
+<!-- Header -->
+<div class="flex items-center bg-white p-6 pb-4 justify-between sticky top-0 z-10">
+<button class="text-slate-900 flex size-10 items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">My Cart</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="text-primary text-sm font-semibold hover:opacity-80">Clear All</button>
+</div>
+</div>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto px-6 space-y-6 pb-40">
+<!-- Cart Item 1 -->
+<div class="flex items-center gap-4 bg-white py-2 group">
+<div class="bg-slate-50 aspect-square rounded-2xl size-20 flex items-center justify-center p-2 relative overflow-hidden">
+<img class="w-full h-full object-contain mix-blend-multiply" data-alt="Bunch of fresh organic yellow bananas" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzyQGTYOz-LPV6L5PGD4rc-Mw8eQFqGVBiKhYWbXyEhcDBJFPe4PFQCo3bn9NmzU_h7v5WirKxeyg2Qw008X2DZzLd9NCVc-o91fy7XSPlgCqIu3ld7iYyS3gMgXl9pvNfEH8XBH2Kf0ycfztaDCnZ20mVz48NJtS0JxBaUFK-K1ozbh1B3XqiDIrBrSoklUVoHuLL-1TYWNEkQcR21si5onzqlRMYJRqv-dLllyghO0CsGlTzGjbn5Hj3RkueC6IIDve7nUZrZg"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-slate-900 text-lg font-bold leading-tight">Organic Bananas</p>
+<p class="text-slate-500 text-sm font-medium mt-1">$1.99 / lb</p>
+</div>
+<div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-full">
+<button class="text-slate-900 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm hover:bg-slate-100 transition-all">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+<span class="text-slate-900 font-bold text-base min-w-[1.2rem] text-center">2</span>
+<button class="text-white flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-sm hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+<!-- Cart Item 2 -->
+<div class="flex items-center gap-4 bg-white py-2 group">
+<div class="bg-slate-50 aspect-square rounded-2xl size-20 flex items-center justify-center p-2 relative overflow-hidden">
+<img class="w-full h-full object-contain mix-blend-multiply" data-alt="Glass bottle of fresh whole milk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAalnn7jpmgo3V1CMHgV4HCp_-p4Pe_nHOp7xMuSWoyTTPq9h0VIyyhYQDHVfINSFG3Z36-0wzzPOfvzjxfPUTlWgFqFcJ4HSLYkvkTF6Qu5scSSVaFttEZUuJ9byjpRMuBsbabzmCeXMbF0G7Na7U5KRK2i7f9GeWHaWwg_UjXUkxgQT8MNvyLcdp7oOXt30QznDIlnXQA5wgW5fK2M2WIzLLSmDuP1xM7VH6-MCtO8r8LtjC5yvIWla1vbQas3Cvx2q3nN-YaVw"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-slate-900 text-lg font-bold leading-tight">Whole Milk (1 gal)</p>
+<p class="text-slate-500 text-sm font-medium mt-1">$4.50</p>
+</div>
+<div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-full">
+<button class="text-slate-900 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm hover:bg-slate-100">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+<span class="text-slate-900 font-bold text-base min-w-[1.2rem] text-center">1</span>
+<button class="text-white flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-sm hover:brightness-110">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+<!-- Cart Item 3 -->
+<div class="flex items-center gap-4 bg-white py-2 group">
+<div class="bg-slate-50 aspect-square rounded-2xl size-20 flex items-center justify-center p-2 relative overflow-hidden">
+<img class="w-full h-full object-contain mix-blend-multiply" data-alt="Whole ripe green avocado" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnxWbz2Ub-3vzpqga4g4ur_6j4YpHFojuZUYStIrawcGtkYUfywonoSAg-xefE6NYZzEBpCH4meI_sZevGc05y_StwKd2ySZvMKIrgRSPXNkYSRlDQ2lMmEtrM1GHuwGcsZGkxBInevtzogqyrMP0OhK9oe7blLByLPR3w5l47QatXY1W_Wz2_FbYXLy7KwfzrcFvKKWmopD3kebJHlGeUL5C1Wfoe0DZGTWzcSDuY43nRgsnJ9-ig5mGgIH-EQm__mKDBNcpM9w"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-slate-900 text-lg font-bold leading-tight">Hass Avocados</p>
+<p class="text-slate-500 text-sm font-medium mt-1">$0.89 each</p>
+</div>
+<div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-full">
+<button class="text-slate-900 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm hover:bg-slate-100">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+<span class="text-slate-900 font-bold text-base min-w-[1.2rem] text-center">4</span>
+<button class="text-white flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-sm hover:brightness-110">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+<!-- Cart Item 4 -->
+<div class="flex items-center gap-4 bg-white py-2 group">
+<div class="bg-slate-50 aspect-square rounded-2xl size-20 flex items-center justify-center p-2 relative overflow-hidden">
+<img class="w-full h-full object-contain mix-blend-multiply" data-alt="Fresh vibrant orange fruit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZXsnGRdT-hYSK9-JJW2_Z2QGqHGA0cxRNhW9m6GP70JntP8E1xLWrAQeiEdWRZMShlWsZbS9XOOLfcxTMub103PGazNV7ZEbs9DWD72TQfDWYKNbvz6AVO45j8ebTbexqo3yUQGqRjLQ2ghoR1oDn-yNwfOvTvJcN4N3icDjBVEeh_Z2eFVxWjqKZGfZSGieVuPuLLH0zHAylucD93wEwgPHlretGztUSCl-gPDq33XRm5Okj_dWqoafbDx-ytvzAmzRkvZHOxw"/>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-slate-900 text-lg font-bold leading-tight">Valencia Oranges</p>
+<p class="text-slate-500 text-sm font-medium mt-1">$3.99 / bag</p>
+</div>
+<div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-full">
+<button class="text-slate-900 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm hover:bg-slate-100">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+<span class="text-slate-900 font-bold text-base min-w-[1.2rem] text-center">1</span>
+<button class="text-white flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-sm hover:brightness-110">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+<!-- Summary Card -->
+<div class="bg-slate-50 rounded-2xl p-6 space-y-4 mt-8">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-medium">Subtotal</span>
+<span class="text-slate-900 font-bold text-lg">$12.04</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-slate-500 font-medium">Delivery Fee</span>
+<span class="text-slate-900 font-bold text-lg">$2.00</span>
+</div>
+<div class="h-px bg-slate-200 w-full my-2"></div>
+<div class="flex justify-between items-center">
+<span class="text-slate-900 font-bold text-xl">Total</span>
+<span class="text-primary font-bold text-2xl">$14.04</span>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Section (Checkout + Tab Bar) -->
+<div class="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 pt-4 pb-0 z-20">
+<!-- Checkout Button -->
+<div class="px-6 mb-4">
+<button class="w-full bg-primary text-white font-bold py-5 rounded-xl shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex justify-between items-center px-8">
+<span class="text-lg">Proceed to Checkout</span>
+<span class="text-lg font-extrabold">$14.04</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="flex gap-2 bg-white px-4 pb-8 pt-2 relative items-center justify-between">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<div class="flex h-10 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">home</span>
+</div>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<div class="flex h-10 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">search</span>
+</div>
+</a>
+<!-- Central Shopping Cart Button -->
+<div class="relative -top-8 px-2">
+<a class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-xl border-4 border-white transform transition-transform hover:scale-105 active:scale-90" href="#">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1">shopping_cart</span>
+<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">4</span>
+</a>
+</div>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<div class="flex h-10 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">favorite</span>
+</div>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<div class="flex h-10 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">person</span>
+</div>
+</a>
+</div>
+<!-- Safe Area Indicator (Mock) -->
+<div class="h-1 bg-slate-200 w-32 mx-auto rounded-full mb-2"></div>
+</div>
+</div>
+</body></html>

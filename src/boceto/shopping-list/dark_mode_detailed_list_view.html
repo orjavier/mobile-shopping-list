@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dark Mode Detailed List View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF6C37",
+                        "background-light": "#F8F8F8",
+                        "background-dark": "#000000",
+                        "surface-dark": "#1C1C1E",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "16px",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-shadow {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex items-center justify-center p-4">
+<div class="relative w-full max-w-[390px] h-[844px] bg-white dark:bg-background-dark rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-slate-900 dark:border-zinc-800 flex flex-col">
+<div class="h-12 w-full flex items-center justify-between px-8">
+<span class="text-xs font-semibold dark:text-white">9:41</span>
+<div class="flex items-center gap-1.5">
+<span class="material-icons-outlined text-[14px]">signal_cellular_alt</span>
+<span class="material-icons-outlined text-[14px]">wifi</span>
+<span class="material-icons-outlined text-[14px]">battery_full</span>
+</div>
+</div>
+<div class="px-6 pt-4 pb-2 flex items-center justify-between">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800/50">
+<span class="material-icons-outlined text-slate-700 dark:text-zinc-300">arrow_back</span>
+</button>
+<div class="flex -space-x-2">
+<img alt="Collaborator 1" class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs9rhQARpfYgLV6sJoB59yV682v93U4ByPQFjRlR2iBOdylvhc3048TdFY4gYhm1mHHxwclkrH9SgXih0qusd_yhKfvjMqB3tgW2m7Qk9hKl4LL1NWxAUjDW_lcHKpxV_f0miIODM8f0ZNuGF39p9TUtlqRAkNRh5yTboXQk7O7G5MDYfMTKk5CLkS1JEzu8OwB0gPRA4wuNn2WvjsZgtKJPM9ii_UouC6TXO1LA110sBp0cG7YpdQc_i8YzUqjroHcAHFuFdQsQ"/>
+<img alt="Collaborator 2" class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7quf0Z2zb2NaLQGcX4ENF6EHp0YzVqKd6qrQrTi4xxxago0i3C4EFjeirE5rnqtd-unFRuioH3LBY2bFVqhs-4rZzX6-o6iTQkp4fJXCFdqK40A31SqFzqSL35AsCCFTSIN0cqn5DqNq8HyPgLMoG41uo6nLeMFjgRqw4CXo8TQI4LLW_BqlMbWbEM5Hk5qhPtmAJldGmjxLZfO49cX_LjkgqHVmC6I8ksTFneCgS1M6uPv7ZngrGmmuZbCwvjDDFOgw1G8pDww"/>
+<div class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark bg-primary/20 flex items-center justify-center">
+<span class="text-[10px] font-bold text-primary">+</span>
+</div>
+</div>
+</div>
+<div class="px-6 py-4">
+<h1 class="text-2xl font-bold tracking-tight">Morning breakfast</h1>
+</div>
+<div class="flex-1 overflow-y-auto hide-scrollbar px-6 space-y-8 pb-32">
+<section>
+<h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-4">Dairy</h2>
+<div class="space-y-4">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700 flex items-center justify-center">
+<div class="w-3 h-3 rounded-full bg-transparent"></div>
+</div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Milk</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 gal</span>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700 flex items-center justify-center">
+<div class="w-3 h-3 rounded-full bg-transparent"></div>
+</div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Butter</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 ct</span>
+</div>
+<div class="flex items-center justify-between group opacity-50">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-icons-outlined text-white text-[16px]">check</span>
+</div>
+<span class="font-medium text-slate-800 dark:text-zinc-200 line-through">Parmesan cheese</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 ct</span>
+</div>
+<div class="flex items-center justify-between group opacity-50">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-icons-outlined text-white text-[16px]">check</span>
+</div>
+<span class="font-medium text-slate-800 dark:text-zinc-200 line-through">Eggs</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">4 ct</span>
+</div>
+</div>
+</section>
+<section>
+<h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-4">Bakery</h2>
+<div class="space-y-4">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700"></div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Bread</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 ct</span>
+</div>
+<div class="flex items-center justify-between group opacity-50">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-icons-outlined text-white text-[16px]">check</span>
+</div>
+<span class="font-medium text-slate-800 dark:text-zinc-200 line-through">Blueberry muffins</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">2 ct</span>
+</div>
+</div>
+</section>
+<section>
+<h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-4">Drinks</h2>
+<div class="space-y-4">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700"></div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Mocha coffee</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 ct</span>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700"></div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Orange juice</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 gal</span>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-zinc-700"></div>
+<span class="font-medium text-slate-800 dark:text-zinc-200">Almond Milk</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-zinc-500">1 ct</span>
+</div>
+</div>
+</section>
+</div>
+<div class="absolute bottom-24 left-0 right-0 px-6 pointer-events-none">
+<div class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200 dark:border-zinc-800 rounded-2xl h-16 flex items-center justify-between px-6 pointer-events-auto ios-shadow">
+<button class="text-slate-500 dark:text-zinc-400">
+<span class="material-icons-outlined">mic</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center -mt-16 ios-shadow active:scale-95 transition-transform">
+<span class="material-icons-outlined">add</span>
+</button>
+<button class="text-slate-500 dark:text-zinc-400">
+<span class="material-icons-outlined">qr_code_scanner</span>
+</button>
+</div>
+</div>
+<div class="h-20 bg-white dark:bg-zinc-900/50 backdrop-blur-md border-t border-slate-100 dark:border-zinc-800 flex items-center justify-around px-4">
+<button class="flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
+<span class="material-icons-outlined">home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
+<span class="material-icons-outlined">search</span>
+</button>
+<button class="relative flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
+<span class="material-icons-outlined">shopping_cart</span>
+<span class="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center">5</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons-outlined">receipt_long</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
+<span class="material-icons-outlined">person</span>
+</button>
+</div>
+<div class="h-1.5 w-32 bg-slate-300 dark:bg-zinc-700 rounded-full mx-auto mb-2"></div>
+</div>
+
+</body></html>

@@ -1,17 +1,31 @@
-import { useCallback, useEffect, useState } from 'react';
+/**
+ * ShoppingListsScreen — boceto: dark_mode_shopping_lists_overview.html
+ * Header: "Shopping lists" centrado
+ * Sección "Our recommendations" (listas del sistema)
+ * Sección "Recently created" (listas del usuario)
+ * CustomTabBar existente + BottomSheet para crear lista
+ */
+
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Modal,
+  FlatList,
   Platform,
   RefreshControl,
-  ScrollView,
+  StatusBar,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 
-import { Text, View } from '@/components/Themed';
+import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
+import { Text } from '@/components/Themed';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
@@ -21,477 +35,408 @@ import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
+// ─── design tokens ────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg: '#F9FAFB',
+  surface: '#FFFFFF',
+  header: 'rgba(249,250,251,0.9)',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  textSub: '#94A3B8',
+  sectionLabel: '#94A3B8',
+  card: '#FFFFFF',
+  cardBorder: 'rgba(0,0,0,0.04)',
+  chevron: '#CBD5E1',
+  sheetBg: '#FFFFFF',
+  inputBg: '#F1F5F9',
+  inputBorder: '#E2E8F0',
+  inputText: '#0F172A',
+  cancelBg: '#F1F5F9',
+  cancelText: '#64748B',
+  separator: '#F1F5F9',
+};
+const DARK = {
+  bg: '#121212',
+  surface: '#1C1C1E',
+  header: 'rgba(18,18,18,0.92)',
+  text: '#F1F5F9',
+  textMuted: '#94A3B8',
+  textSub: '#64748B',
+  sectionLabel: '#64748B',
+  card: '#1C1C1E',
+  cardBorder: 'rgba(255,255,255,0.05)',
+  chevron: '#4B5563',
+  sheetBg: '#1C1C1E',
+  inputBg: '#252525',
+  inputBorder: 'rgba(255,255,255,0.08)',
+  inputText: '#F1F5F9',
+  cancelBg: '#252525',
+  cancelText: '#94A3B8',
+  separator: 'rgba(255,255,255,0.07)',
+};
+
+// icon+color palettes para las tarjetas (ciclo)
+const PALETTES = [
+  { bg: '#FFF3E0', icon: 'shopping-basket', iconColor: PRIMARY },
+  { bg: '#FFF9C4', icon: 'search', iconColor: '#D97706' },
+  { bg: '#E8F5E9', icon: 'eco', iconColor: '#16A34A' },
+  { bg: '#FCE4EC', icon: 'local-pizza', iconColor: '#E11D48' },
+  { bg: '#FCE4EC', icon: 'restaurant', iconColor: '#BE185D' },
+  { bg: '#E3F2FD', icon: 'local-bar', iconColor: '#1D4ED8' },
+  { bg: '#EDE7F6', icon: 'shopping-cart', iconColor: '#7C3AED' },
+] as const;
+const PALETTES_DARK = [
+  { bg: 'rgba(255,108,55,0.22)', icon: 'shopping-basket', iconColor: PRIMARY },
+  { bg: 'rgba(217,119, 6,0.22)', icon: 'search', iconColor: '#F59E0B' },
+  { bg: 'rgba(22,163,74,0.22)', icon: 'eco', iconColor: '#4ADE80' },
+  { bg: 'rgba(225,29,72,0.22)', icon: 'local-pizza', iconColor: '#F87171' },
+  { bg: 'rgba(190,24,93,0.22)', icon: 'restaurant', iconColor: '#FB7185' },
+  { bg: 'rgba(29,78,216,0.22)', icon: 'local-bar', iconColor: '#60A5FA' },
+  { bg: 'rgba(124,58,237,0.22)', icon: 'shopping-cart', iconColor: '#A78BFA' },
+] as const;
+
+function paletteFor(idx: number, isDark: boolean) {
+  const arr = isDark ? PALETTES_DARK : PALETTES;
+  return arr[idx % arr.length];
+}
+
+// ─── ListRow ─────────────────────────────────────────────────────────────────
+interface RowProps {
+  item: IShoppingList;
+  idx: number;
+  isDark: boolean;
+  C: typeof LIGHT;
+  onPress: () => void;
+  onLongPress: () => void;
+}
+
+function ListRow({ item, idx, isDark, C, onPress, onLongPress }: RowProps) {
+  const pal = paletteFor(idx, isDark);
+  const count = item.itemsProduct?.length ?? 0;
+  return (
+    <TouchableOpacity
+      style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder }]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.72}
+    >
+      <View style={[s.rowIcon, { backgroundColor: pal.bg }]}>
+        <MaterialIcons name={pal.icon as never} size={22} color={pal.iconColor} />
+      </View>
+      <View style={s.rowBody}>
+        <Text style={[s.rowName, { color: C.text }]}>{item.name}</Text>
+        <Text style={[s.rowSub, { color: C.textMuted }]}>{count} producto{count !== 1 ? 's' : ''}</Text>
+      </View>
+      <MaterialIcons name="chevron-right" size={22} color={C.chevron} />
+    </TouchableOpacity>
+  );
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ShoppingListsScreen() {
   const router = useRouter();
-  const [lists, setLists] = useState<IShoppingList[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newListName, setNewListName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const C = isDark ? DARK : LIGHT;
+  const user = useAuthStore((s) => s.user);
 
+  const [lists, setLists] = useState<IShoppingList[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const bsRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['40%'], []);
+
+  // ─── fetch ─────────────────────────────────────────────────────────────────
   const fetchLists = useCallback(async () => {
     if (!user?._id) return;
-
     try {
       const data = await shoppingListRepository.getByUser(user._id);
       setLists(data);
-    } catch (error: unknown) {
-      let message = 'Error al cargar las listas';
-      if (error && typeof error === 'object' && 'response' in error) {
-        const err = error as { response?: { data?: { message?: string } } };
-        message = err.response?.data?.message || message;
-      }
-      showToast.error('Error', message);
+    } catch {
+      showToast.error('Error', 'No se pudieron cargar las listas');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
       setRefreshing(false);
     }
   }, [user?._id]);
 
-  useEffect(() => {
-    fetchLists();
-  }, [fetchLists]);
+  useEffect(() => { fetchLists(); }, [fetchLists]);
+  const onRefresh = () => { setRefreshing(true); fetchLists(); };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchLists();
-  };
+  // ─── create ────────────────────────────────────────────────────────────────
+  const openSheet = () => { setNewName(''); bsRef.current?.expand(); };
 
-  const formatDate = (date?: Date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
-
-  const getStatusColor = (status: 'open' | 'closed') => {
-    return status === 'open' ? '#4CAF50' : '#9E9E9E';
-  };
-
-  const getStatusText = (status: 'open' | 'closed') => {
-    return status === 'open' ? 'Abierta' : 'Cerrada';
-  };
-
-  const openCreateModal = () => {
-    setNewListName('');
-    setIsModalVisible(true);
-  };
-
-  const handleCreateList = async () => {
-
-    if (!newListName.trim()) {
-      showToast.error('Error', 'El nombre no puede estar vacío');
-      return;
-    }
-
-    if (!user?._id) {
-      showToast.error('Error', 'Usuario no autenticado');
-      return;
-    }
-
-    setIsCreating(true);
-
+  const handleCreate = async () => {
+    const name = newName.trim();
+    if (!name) { showToast.error('Error', 'El nombre no puede estar vacío'); return; }
+    if (!user?._id) { showToast.error('Error', 'Usuario no autenticado'); return; }
+    setCreating(true);
     try {
-      const dto = new CreateShoppingListDTO(newListName.trim(), user._id);
-      const newList = await shoppingListRepository.create(dto);
-
-      showToast.success('Éxito', 'Lista creada correctamente');
-      setIsModalVisible(false);
+      const dto = new CreateShoppingListDTO(name, user._id);
+      const nl = await shoppingListRepository.create(dto);
+      showToast.success('Éxito', `Lista "${name}" creada`);
+      bsRef.current?.close();
       fetchLists();
-
-      if (newList && newList._id) {
-        navigateToList(newList._id);
-      }
-    } catch (error: unknown) {
-      console.error('[ShoppingLists] Error al crear lista:', error);
-      let message = 'No se pudo crear la lista';
-      if (error && typeof error === 'object' && 'response' in error) {
-        const err = error as { response?: { data?: { message?: string } } };
-        message = err.response?.data?.message || message;
-      }
-      showToast.error('Error', message);
+      if (nl?._id) router.push(`/list/${nl._id}` as never);
+    } catch {
+      showToast.error('Error', 'No se pudo crear la lista');
     } finally {
-      setIsCreating(false);
+      setCreating(false);
     }
   };
 
-  const handleDeleteList = (list: IShoppingList) => {
-    Alert.alert(
-      'Eliminar Lista',
-      `¿Estás seguro de que quieres eliminar "${list.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await shoppingListRepository.delete(list._id!);
-              showToast.success('Éxito', 'Lista eliminada');
-              fetchLists();
-            } catch (error: unknown) {
-              showToast.error('Error', 'No se pudo eliminar la lista');
-            }
-          },
+  // ─── delete ────────────────────────────────────────────────────────────────
+  const handleDelete = (item: IShoppingList) => {
+    Alert.alert('Eliminar', `¿Eliminar "${item.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar', style: 'destructive',
+        onPress: async () => {
+          try {
+            await shoppingListRepository.delete(item._id!);
+            showToast.success('Éxito', 'Lista eliminada');
+            fetchLists();
+          } catch { showToast.error('Error', 'No se pudo eliminar'); }
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  const navigateToList = (listId: string) => {
-    const url = `/list/${listId}`;
-    router.push(url as never);
-  };
-
-  const renderListCard = (list: IShoppingList) => (
-    <TouchableOpacity
-      key={list._id}
-      style={styles.card}
-      onPress={() => navigateToList(list._id!)}
-      onLongPress={() => handleDeleteList(list)}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{list.name}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(list.status) }]}>
-          <Text style={styles.statusText}>{getStatusText(list.status)}</Text>
-        </View>
-      </View>
-
-      <View style={styles.cardBody}>
-        <View style={styles.infoRow}>
-          <MaterialIcons name="shopping-cart" size={20} color="#FF803E" />
-          <Text style={styles.infoText}>
-            {list.itemsProduct?.length || 0} productos
-          </Text>
-        </View>
-        <View style={styles.infoRow}>
-          <MaterialIcons name="attach-money" size={20} color="#FF803E" />
-          <Text style={styles.infoText}>
-            Total: {formatCurrency(list.totalAmount)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.cardFooter}>
-        <Text style={styles.dateText}>
-          Creada: {formatDate(list.createdAt)}
-        </Text>
-        {list.status === 'closed' && list.closedAt && (
-          <Text style={styles.dateText}>
-            Cerrada: {formatDate(list.closedAt)}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
+  const renderBackdrop = useCallback(
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.55} />
+    ), []
   );
 
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Cargando listas...</Text>
-      </View>
-    );
-  }
+  // ─── split lists ───────────────────────────────────────────────────────────
+  // "recommendations" = first 1 item (or a static set if empty) · rest = "recently created"
+  const recommendations = lists.slice(0, 1);
+  const recent = lists.slice(1);
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#FF803E', '#FF6C37']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Text style={styles.headerTitle}>Mis Listas</Text>
-        <Text style={styles.headerSubtitle}>
-          {lists.length} {lists.length === 1 ? 'lista' : 'listas'}
-        </Text>
-      </LinearGradient>
+    <View style={[s.root, { backgroundColor: C.bg }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+      {/* ── Status bar spacer ── */}
+      <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
+
+      {/* ── Header ── */}
+      <View style={[s.header, { backgroundColor: C.header }]}>
+        <Text style={[s.headerTitle, { color: C.text }]}>Shopping lists</Text>
+      </View>
+
+      {/* ── Content ── */}
+      <FlatList
+        data={[]}
+        keyExtractor={() => 'x'}
+        renderItem={null}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#FF803E']}
-            tintColor="#FF803E"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />
         }
-      >
-        {lists.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="add-shopping-cart" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No tienes listas todavía</Text>
-            <Text style={styles.emptySubtext}>
-              Toca el botón + para crear tu primera lista
-            </Text>
-          </View>
-        ) : (
-          lists.map(renderListCard)
-        )}
-      </ScrollView>
+        contentContainerStyle={s.listContent}
+        ListHeaderComponent={
+          <>
+            {/* ── "Our recommendations" ── */}
+            <Text style={[s.sectionLabel, { color: C.sectionLabel }]}>OUR RECOMMENDATIONS</Text>
 
-      <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
-        <MaterialIcons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+            {loading ? (
+              <View style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder, justifyContent: 'center' }]}>
+                <Text style={[s.rowSub, { color: C.textMuted }]}>Cargando…</Text>
+              </View>
+            ) : recommendations.length === 0 ? (
+              <View style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+                <View style={[s.rowIcon, { backgroundColor: isDark ? 'rgba(255,108,55,0.22)' : '#FFF3E0' }]}>
+                  <MaterialIcons name="shopping-basket" size={22} color={PRIMARY} />
+                </View>
+                <View style={s.rowBody}>
+                  <Text style={[s.rowName, { color: C.text }]}>Often purchased</Text>
+                  <Text style={[s.rowSub, { color: C.textMuted }]}>10 products</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={22} color={C.chevron} />
+              </View>
+            ) : (
+              recommendations.map((item, i) => (
+                <ListRow
+                  key={item._id}
+                  item={item}
+                  idx={i}
+                  isDark={isDark}
+                  C={C}
+                  onPress={() => router.push(`/list/${item._id}` as never)}
+                  onLongPress={() => handleDelete(item)}
+                />
+              ))
+            )}
 
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nueva Lista</Text>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
+            {/* ── "Recently created" ── */}
+            <Text style={[s.sectionLabel, { color: C.sectionLabel, marginTop: 28 }]}>RECENTLY CREATED</Text>
 
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Nombre de la lista</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={newListName}
-                onChangeText={setNewListName}
-                placeholder="Ej: Compras del supermercado"
-                placeholderTextColor="#999"
-                autoFocus
-              />
-            </View>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.createButton, isCreating && styles.createButtonDisabled]}
-                onPress={handleCreateList}
-                disabled={isCreating}
-              >
-                <Text style={styles.createButtonText}>
-                  {isCreating ? 'Creando...' : 'Crear'}
+            {!loading && recent.length === 0 && (
+              <View style={s.emptyWrap}>
+                <View style={[s.emptyIcon, { backgroundColor: `${PRIMARY}18` }]}>
+                  <MaterialIcons name="add-shopping-cart" size={36} color={PRIMARY} />
+                </View>
+                <Text style={[s.emptyTitle, { color: C.text }]}>Sin listas aún</Text>
+                <Text style={[s.emptySub, { color: C.textMuted }]}>
+                  Toca el botón + para crear tu primera lista
                 </Text>
-              </TouchableOpacity>
-            </View>
+              </View>
+            )}
+          </>
+        }
+        ListFooterComponent={
+          <>
+            {recent.map((item, i) => (
+              <ListRow
+                key={item._id}
+                item={item}
+                idx={i + 1}
+                isDark={isDark}
+                C={C}
+                onPress={() => router.push(`/list/${item._id}` as never)}
+                onLongPress={() => handleDelete(item)}
+              />
+            ))}
+          </>
+        }
+      />
+
+      {/* ── CustomTabBar ── */}
+      <CustomTabBar activeRoute="/(tabs)/lists" onFabPress={openSheet} />
+
+      {/* ── BottomSheet: nueva lista ── */}
+      <BottomSheet
+        ref={bsRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={[s.sheetBg, { backgroundColor: C.sheetBg }]}
+        handleIndicatorStyle={{ backgroundColor: C.textSub, width: 40, opacity: 0.35 }}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+      >
+        <BottomSheetView style={s.sheetContent}>
+          {/* header */}
+          <View style={s.sheetHeader}>
+            <Text style={[s.sheetTitle, { color: C.text }]}>Nueva Lista</Text>
+            <TouchableOpacity style={[s.sheetClose, { backgroundColor: C.inputBg }]} onPress={() => bsRef.current?.close()}>
+              <MaterialIcons name="close" size={18} color={C.textMuted} />
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          {/* input */}
+          <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
+          <View style={[s.inputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
+            <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
+            <BottomSheetTextInput
+              style={[s.bsInput, { color: C.inputText }]}
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Ej: Compras del supermercado"
+              placeholderTextColor={C.textSub}
+              returnKeyType="done"
+              onSubmitEditing={handleCreate}
+              autoFocus
+            />
+          </View>
+
+          {/* buttons */}
+          <View style={s.sheetBtns}>
+            <TouchableOpacity
+              style={[s.cancelBtn, { backgroundColor: C.cancelBg, borderColor: C.inputBorder }]}
+              onPress={() => bsRef.current?.close()}
+            >
+              <Text style={[s.cancelTxt, { color: C.cancelText }]}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.createBtn, creating && { opacity: 0.6 }]}
+              onPress={handleCreate}
+              disabled={creating}
+            >
+              <LinearGradient colors={['#FF8C5A', PRIMARY]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.createGrad}>
+                <Text style={s.createTxt}>{creating ? 'Creando…' : 'Crear lista'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+// ─── styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex: 1 },
+
   header: {
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 4,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
     alignItems: 'center',
-    marginBottom: 12,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBody: {
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
-  },
-  cardFooter: {
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+  headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
+
+  listContent: {
+    paddingHorizontal: 24,
     paddingTop: 12,
+    paddingBottom: TAB_TOTAL + 24,
   },
-  dateText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
+
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#666',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF803E',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#FF803E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  modalHeader: {
+
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  modalBody: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-  },
-  modalInput: {
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    backgroundColor: '#f5f5f5',
+    marginBottom: 10,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  rowIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  rowBody: { flex: 1, gap: 2 },
+  rowName: { fontSize: 14, fontWeight: '600', letterSpacing: -0.1 },
+  rowSub: { fontSize: 12, fontWeight: '400' },
+
+  emptyWrap: { alignItems: 'center', paddingVertical: 48, gap: 12 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
+  emptySub: { fontSize: 13, textAlign: 'center', maxWidth: 240, lineHeight: 19 },
+
+  // BottomSheet
+  sheetBg: { borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  sheetContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 },
+  sheetTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.4 },
+  sheetClose: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  inputLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.8, marginBottom: 8 },
+  inputWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 16, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 14,
+    gap: 10, marginBottom: 24,
   },
-  cancelButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginRight: 10,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '600',
-  },
-  createButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: '#FF803E',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  createButtonDisabled: {
-    opacity: 0.7,
-  },
-  createButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-  },
+  bsInput: { flex: 1, fontSize: 15, padding: 0, margin: 0 },
+  sheetBtns: { flexDirection: 'row', gap: 12 },
+  cancelBtn: { flex: 1, borderRadius: 16, borderWidth: 1, paddingVertical: 15, alignItems: 'center' },
+  cancelTxt: { fontSize: 15, fontWeight: '600' },
+  createBtn: { flex: 1, borderRadius: 16, overflow: 'hidden' },
+  createGrad: { paddingVertical: 15, alignItems: 'center' },
+  createTxt: { fontSize: 15, fontWeight: '700', color: '#fff' },
 });

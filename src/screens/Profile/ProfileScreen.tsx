@@ -4,6 +4,7 @@ import React from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
+import CustomTabBar, { TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/stores/authStore';
@@ -44,75 +45,80 @@ const ProfileScreen = () => {
      };
 
      return (
-          <ScrollView style={[styles.container, { backgroundColor }]} contentContainerStyle={styles.content}>
-               <View style={styles.header}>
-                    <View style={styles.avatarContainer}>
-                         {user?.secure_url ? (
-                              <Image source={{ uri: user.secure_url }} style={styles.avatar} />
-                         ) : (
-                              <View style={[styles.avatarPlaceholder, { backgroundColor: '#FF803E' }]}>
-                                   <Text style={styles.avatarText}>
-                                        {user?.firstName?.charAt(0) ?? '?'}
-                                        {user?.lastName?.charAt(0) ?? ''}
-                                   </Text>
-                              </View>
-                         )}
-                         <TouchableOpacity style={styles.editAvatarBtn}>
-                              <MaterialIcons name="camera-alt" size={20} color="#fff" />
-                         </TouchableOpacity>
-                    </View>
-                    <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-                    <Text style={[styles.email, { color: colorScheme === 'dark' ? '#aaa' : '#666' }]}>{user?.email}</Text>
-               </View>
-
-               <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Ajustes</Text>
-
-                    <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
-                         <View style={styles.cardRow}>
-                              <View style={styles.cardIconLabel}>
-                                   <MaterialIcons name={colorScheme === 'dark' ? "dark-mode" : "light-mode"} size={22} color={textColor} />
-                                   <Text style={styles.cardLabel}>Modo Oscuro</Text>
-                              </View>
-                              <Switch
-                                   value={colorScheme === 'dark'}
-                                   onValueChange={toggleTheme}
-                                   trackColor={{ false: '#767577', true: '#FF803E' }}
-                                   thumbColor={colorScheme === 'dark' ? '#ffffff' : '#f4f3f4'}
-                              />
+          <View style={{ flex: 1 }}>
+               <ScrollView style={[styles.container, { backgroundColor }]} contentContainerStyle={styles.content}>
+                    <View style={styles.header}>
+                         <View style={styles.avatarContainer}>
+                              {user?.secure_url ? (
+                                   <Image source={{ uri: user.secure_url }} style={styles.avatar} />
+                              ) : (
+                                   <View style={[styles.avatarPlaceholder, { backgroundColor: '#FF803E' }]}>
+                                        <Text style={styles.avatarText}>
+                                             {user?.firstName?.charAt(0) ?? '?'}
+                                             {user?.lastName?.charAt(0) ?? ''}
+                                        </Text>
+                                   </View>
+                              )}
+                              <TouchableOpacity style={styles.editAvatarBtn}>
+                                   <MaterialIcons name="camera-alt" size={20} color="#fff" />
+                              </TouchableOpacity>
                          </View>
+                         <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+                         <Text style={[styles.email, { color: colorScheme === 'dark' ? '#aaa' : '#666' }]}>{user?.email}</Text>
+                    </View>
 
-                         <TouchableOpacity style={styles.cardRow} onPress={() => setTheme('system')}>
-                              <View style={styles.cardIconLabel}>
-                                   <MaterialIcons name="settings-brightness" size={22} color={textColor} />
-                                   <Text style={styles.cardLabel}>Usar tema del sistema</Text>
+                    <View style={styles.section}>
+                         <Text style={styles.sectionTitle}>Ajustes</Text>
+
+                         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+                              <View style={styles.cardRow}>
+                                   <View style={styles.cardIconLabel}>
+                                        <MaterialIcons name={colorScheme === 'dark' ? "dark-mode" : "light-mode"} size={22} color={textColor} />
+                                        <Text style={styles.cardLabel}>Modo Oscuro</Text>
+                                   </View>
+                                   <Switch
+                                        value={colorScheme === 'dark'}
+                                        onValueChange={toggleTheme}
+                                        trackColor={{ false: '#767577', true: '#FF803E' }}
+                                        thumbColor={colorScheme === 'dark' ? '#ffffff' : '#f4f3f4'}
+                                   />
                               </View>
-                              {theme === 'system' && <MaterialIcons name="check" size={20} color="#FF803E" />}
-                         </TouchableOpacity>
-                    </View>
-               </View>
 
-               <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Información Personal</Text>
-                    <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
-                         <InfoRow label="Nombre" value={user?.firstName} icon="person" />
-                         <InfoRow label="Apellido" value={user?.lastName} icon="person-outline" />
-                         <InfoRow label="Email" value={user?.email} icon="email" last />
+                              <TouchableOpacity style={styles.cardRow} onPress={() => setTheme('system')}>
+                                   <View style={styles.cardIconLabel}>
+                                        <MaterialIcons name="settings-brightness" size={22} color={textColor} />
+                                        <Text style={styles.cardLabel}>Usar tema del sistema</Text>
+                                   </View>
+                                   {theme === 'system' && <MaterialIcons name="check" size={20} color="#FF803E" />}
+                              </TouchableOpacity>
+                         </View>
                     </View>
-               </View>
 
-               {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <View style={styles.section}>
+                         <Text style={styles.sectionTitle}>Información Personal</Text>
+                         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+                              <InfoRow label="Nombre" value={user?.firstName} icon="person" />
+                              <InfoRow label="Apellido" value={user?.lastName} icon="person-outline" />
+                              <InfoRow label="Email" value={user?.email} icon="email" last />
+                         </View>
+                    </View>
+
+                    {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <MaterialIcons name="logout" size={20} color="#fff" />
                     <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                </TouchableOpacity> */}
 
-               <CustomButton
-                    title="Cerrar Sesión"
-                    onPress={handleLogout}
-                    variant="outlined"
-               />
-               <Text style={styles.versionText}>Versión 1.0.0</Text>
-          </ScrollView>
+                    <CustomButton
+                         title="Cerrar Sesión"
+                         onPress={handleLogout}
+                         variant="outlined"
+                    />
+                    <Text style={styles.versionText}>Versión 1.0.0</Text>
+               </ScrollView>
+
+               {/* ── Custom Tab Bar ── */}
+               <CustomTabBar activeRoute="/(tabs)/profile" />
+          </View>
      );
 }
 
@@ -140,7 +146,7 @@ const styles = StyleSheet.create({
      },
      content: {
           padding: 20,
-          paddingBottom: 40,
+          paddingBottom: TAB_TOTAL + 40,
      },
      header: {
           alignItems: 'center',

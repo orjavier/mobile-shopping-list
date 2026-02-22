@@ -1,3 +1,11 @@
+/**
+ * Shopping List Detail — boceto: dark_mode_detailed_list_view.html
+ * Header: back‑button + collaborator avatars + título
+ * Items agrupados por categoría, checkboxes circulares naranjas
+ * Barra inferior: mic | [FAB +] | qr_code_scanner
+ * CustomTabBar NO aparece aquí (es pantalla de detalle, tiene back)
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,53 +15,107 @@ import {
   Platform,
   RefreshControl,
   ScrollView,
+  SectionList,
+  StatusBar,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
-import { Text, View } from '@/components/Themed';
+import { Text } from '@/components/Themed';
 import { IItemProduct } from '@/interfaces/item-product.interface';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
+// ─── design tokens ────────────────────────────────────────────────────────────
+const PRIMARY = '#FF6C37';
+
+const LIGHT = {
+  bg: '#F8F8F8',
+  surface: '#FFFFFF',
+  headerBg: '#FFFFFF',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  textSub: '#94A3B8',
+  sectionLabel: '#94A3B8',
+  border: '#E2E8F0',
+  checkBorder: '#CBD5E1',
+  backBtn: '#F1F5F9',
+  backIcon: '#374151',
+  actionBar: 'rgba(255,255,255,0.92)',
+  completedTxt: '#94A3B8',
+  itemBg: 'transparent',
+};
+const DARK = {
+  bg: '#000000',
+  surface: '#1C1C1E',
+  headerBg: '#000000',
+  text: '#F1F5F9',
+  textMuted: '#94A3B8',
+  textSub: '#64748B',
+  sectionLabel: '#4B5563',
+  border: 'rgba(255,255,255,0.08)',
+  checkBorder: '#3F3F46',
+  backBtn: 'rgba(255,255,255,0.08)',
+  backIcon: '#D1D5DB',
+  actionBar: 'rgba(24,24,27,0.92)',
+  completedTxt: '#52525B',
+  itemBg: 'transparent',
+};
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+type SectionData = { title: string; data: IItemProduct[] };
+
+function groupByCategory(items: IItemProduct[]): SectionData[] {
+  const map = new Map<string, IItemProduct[]>();
+  for (const item of items) {
+    const key = (item.notes?.split('|')[0]?.trim()) || 'General';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+  return Array.from(map.entries()).map(([title, data]) => ({ title, data }));
+}
+
+const fmt = (n: number) =>
+  `$${(n || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// ─── SCREEN ──────────────────────────────────────────────────────────────────
 export default function ShoppingListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const C = isDark ? DARK : LIGHT;
+  const user = useAuthStore((s) => s.user);
+
   const [list, setList] = useState<IShoppingList | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Modal state
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  // modal
+  const [modalVisible, setModalVisible] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
-
-  // New Item State
+  const [editingItem, setEditingItem] = useState<IItemProduct | null>(null);
   const [itemName, setItemName] = useState('');
   const [itemQuantity, setItemQuantity] = useState('1');
   const [itemUnit, setItemUnit] = useState('unid');
   const [itemPrice, setItemPrice] = useState('0');
   const [itemNotes, setItemNotes] = useState('');
 
-  // Edit Item State
-  const [editingItem, setEditingItem] = useState<IItemProduct | null>(null);
-
-  const user = useAuthStore((state) => state.user);
-
+  // ─── fetch ─────────────────────────────────────────────────────────────────
   const fetchList = useCallback(async () => {
     if (!id) return;
-
     try {
       const data = await shoppingListRepository.getById(id);
       setList(data);
-    } catch (error: unknown) {
-      console.error('[fetchList] Error:', error);
+    } catch {
       showToast.error('Error', 'No se pudo cargar la lista');
     } finally {
       setIsLoading(false);
@@ -61,402 +123,325 @@ export default function ShoppingListDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+  useEffect(() => { fetchList(); }, [fetchList]);
+  const onRefresh = () => { setRefreshing(true); fetchList(); };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchList();
-  };
-
+  // ─── actions ───────────────────────────────────────────────────────────────
   const toggleItem = async (itemId: string) => {
     try {
       await shoppingListRepository.toggleItemCompleted(itemId);
       await fetchList();
-    } catch (error: unknown) {
-      console.error('[toggleItem] Error:', error);
-      showToast.error('Error', 'No se pudo actualizar el item');
-    }
+    } catch { showToast.error('Error', 'No se pudo actualizar el item'); }
   };
 
-  const handleAddItem = async () => {
-    if (!itemName.trim()) {
-      showToast.error('Error', 'El nombre es obligatorio');
-      return;
-    }
+  const resetForm = () => {
+    setItemName(''); setItemQuantity('1'); setItemUnit('unid');
+    setItemPrice('0'); setItemNotes(''); setEditingItem(null);
+    setModalVisible(false);
+  };
 
-    if (!list?._id || !user?._id) {
-      showToast.error('Error', 'Usuario no autenticado');
-      return;
-    }
+  const openAddModal = () => {
+    resetForm();
+    setModalVisible(true);
+  };
 
+  const openEditModal = (item: IItemProduct) => {
+    setEditingItem(item);
+    setItemName(item.name);
+    setItemQuantity(String(item.quantity));
+    setItemUnit(item.unit);
+    setItemPrice(String(item.price || 0));
+    setItemNotes(item.notes || '');
+    setModalVisible(true);
+  };
+
+  const handleSave = async () => {
+    if (!itemName.trim()) { showToast.error('Error', 'El nombre es obligatorio'); return; }
+    if (!list?._id || !user?._id) { showToast.error('Error', 'Usuario no autenticado'); return; }
     setIsAddingItem(true);
     try {
       if (editingItem?._id) {
-        // Edit mode
-        const updatedItem = {
-          name: itemName.trim(),
-          quantity: parseFloat(itemQuantity) || 1,
-          unit: itemUnit.trim() || 'unid',
-          price: parseFloat(itemPrice) || 0,
+        await shoppingListRepository.updateItem(editingItem._id, {
+          name: itemName.trim(), quantity: parseFloat(itemQuantity) || 1,
+          unit: itemUnit.trim() || 'unid', price: parseFloat(itemPrice) || 0,
           notes: itemNotes.trim(),
-        };
-
-        await shoppingListRepository.updateItem(editingItem._id, updatedItem);
+        });
         showToast.success('Éxito', 'Producto actualizado');
       } else {
-        // Add mode
-        const newItem = {
-          name: itemName.trim(),
-          quantity: parseFloat(itemQuantity) || 1,
-          unit: itemUnit.trim() || 'unid',
-          price: parseFloat(itemPrice) || 0,
-          notes: itemNotes.trim(),
-          isCompleted: false,
-          memberId: String(user._id),
-        };
-
-        await shoppingListRepository.addItem(list._id, newItem);
+        await shoppingListRepository.addItem(list._id, {
+          name: itemName.trim(), quantity: parseFloat(itemQuantity) || 1,
+          unit: itemUnit.trim() || 'unid', price: parseFloat(itemPrice) || 0,
+          notes: itemNotes.trim(), isCompleted: false, memberId: String(user._id),
+        });
         showToast.success('Éxito', 'Producto agregado');
       }
-
-      // Reset and close
-      resetItemForm();
+      resetForm();
       fetchList();
-    } catch (error: unknown) {
-      console.error('[ListDetail] Error al guardar item:', error);
+    } catch {
       showToast.error('Error', 'No se pudo guardar el producto');
     } finally {
       setIsAddingItem(false);
     }
   };
 
-  const resetItemForm = () => {
-    setItemName('');
-    setItemQuantity('1');
-    setItemUnit('unid');
-    setItemPrice('0');
-    setItemNotes('');
-    setEditingItem(null);
-    setIsModalVisible(false);
-  };
-
-  const deleteItem = async (itemId: string) => {
-    if (!list?._id) return;
-
-    Alert.alert(
-      'Opciones',
-      '¿Qué deseas hacer con este producto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Editar',
-          onPress: () => {
-            const item = list?.itemsProduct?.find((i) => i._id === itemId);
-            if (item) {
-              setEditingItem(item);
-              setItemName(item.name);
-              setItemQuantity(String(item.quantity));
-              setItemUnit(item.unit);
-              setItemPrice(String(item.price || 0));
-              setItemNotes(item.notes || '');
-              setIsModalVisible(true);
-            }
-          },
+  const handleItemLongPress = (item: IItemProduct) => {
+    Alert.alert('Opciones', `"${item.name}"`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Editar', onPress: () => openEditModal(item) },
+      {
+        text: 'Eliminar', style: 'destructive',
+        onPress: async () => {
+          try {
+            await shoppingListRepository.deleteItem(list!._id!, item._id!);
+            showToast.success('Éxito', 'Producto eliminado');
+            fetchList();
+          } catch { showToast.error('Error', 'No se pudo eliminar'); }
         },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await shoppingListRepository.deleteItem(list._id!, itemId);
-              showToast.success('Éxito', 'Producto eliminado');
-              fetchList();
-            } catch (error: unknown) {
-              showToast.error('Error', 'No se pudo eliminar el producto');
-            }
-          },
-        },
-      ],
-    );
+      },
+    ]);
   };
 
-  const closeList = async () => {
+  const toggleListStatus = async () => {
     if (!list?._id) return;
-
+    const next = list.status === 'open' ? 'closed' : 'open';
     try {
-      await shoppingListRepository.update(list._id, { status: 'closed' });
-      showToast.success('Éxito', 'Lista cerrada');
+      await shoppingListRepository.update(list._id, { status: next });
+      showToast.success('Éxito', next === 'closed' ? 'Lista cerrada' : 'Lista abierta');
       fetchList();
-    } catch (error: unknown) {
-      showToast.error('Error', 'No se pudo cerrar la lista');
-    }
+    } catch { showToast.error('Error', 'No se pudo actualizar'); }
   };
 
-  const openList = async () => {
-    if (!list?._id) return;
+  // ─── derived ───────────────────────────────────────────────────────────────
+  const completedCount = useMemo(() => list?.itemsProduct?.filter((i) => i.isCompleted).length ?? 0, [list]);
+  const totalCount = list?.itemsProduct?.length ?? 0;
+  const sections = useMemo(() => groupByCategory(list?.itemsProduct ?? []), [list]);
+  const isOpen = list?.status === 'open';
 
-    try {
-      await shoppingListRepository.update(list._id, { status: 'open' });
-      showToast.success('Éxito', 'Lista abierta');
-      fetchList();
-    } catch (error: unknown) {
-      showToast.error('Error', 'No se pudo abrir la lista');
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `$${(amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const completedCount = useMemo(() =>
-    list?.itemsProduct?.filter((item) => item.isCompleted).length || 0
-    , [list?.itemsProduct]);
-
-  const totalCount = list?.itemsProduct?.length || 0;
-
+  // ─── loading / not found ───────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF803E" />
-        <Text style={styles.loadingText}>Cargando lista...</Text>
+      <View style={[s.center, { backgroundColor: C.bg }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color={PRIMARY} />
+        <Text style={[s.loadingTxt, { color: C.textMuted }]}>Cargando lista…</Text>
       </View>
     );
   }
 
   if (!list) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Lista no encontrada</Text>
+      <View style={[s.center, { backgroundColor: C.bg }]}>
+        <Text style={{ color: C.textMuted }}>Lista no encontrada</Text>
       </View>
     );
   }
 
+  // ─── render ────────────────────────────────────────────────────────────────
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#FF803E', '#FF6C37']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{list.name}</Text>
-            <Text style={styles.headerSubtitle}>
-              {completedCount} de {totalCount} completados
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={list.status === 'open' ? closeList : openList}
-            style={styles.actionButton}
-          >
-            <MaterialIcons
-              name={list.status === 'open' ? 'lock-open' : 'lock'}
-              size={24}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        </LinearGradient>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={[s.root, { backgroundColor: C.bg }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
-        <View style={styles.progressBar}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
-              },
-            ]}
-          />
+        {/* ── Status bar spacer ── */}
+        <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28), backgroundColor: C.headerBg }} />
+
+        {/* ── Header row: back | title | avatars / status ── */}
+        <View style={[s.header, { backgroundColor: C.headerBg }]}>
+          <TouchableOpacity style={[s.backBtn, { backgroundColor: C.backBtn }]} onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" size={22} color={C.backIcon} />
+          </TouchableOpacity>
+
+          <View style={s.headerCenter} />
+
+          {/* status pill */}
+          <TouchableOpacity
+            style={[s.statusPill, { backgroundColor: isOpen ? `${PRIMARY}22` : 'rgba(148,163,184,0.15)' }]}
+            onPress={toggleListStatus}
+            activeOpacity={0.75}
+          >
+            <View style={[s.statusDot, { backgroundColor: isOpen ? PRIMARY : C.textSub }]} />
+            <Text style={[s.statusTxt, { color: isOpen ? PRIMARY : C.textSub }]}>
+              {isOpen ? 'Abierta' : 'Cerrada'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#FF803E']}
-              tintColor="#FF803E"
-            />
-          }
-        >
-          {list.itemsProduct?.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="shopping-basket" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>Tu lista está vacía</Text>
-              <Text style={styles.emptySubtext}>Agrega productos con el botón +</Text>
-            </View>
-          ) : (
-            list.itemsProduct?.map((item) => (
-              <TouchableOpacity
-                key={item._id}
-                style={[styles.itemCard, item.isCompleted && styles.itemCardCompleted]}
-                onPress={() => toggleItem(item._id!)}
-                onLongPress={() => deleteItem(item._id!)}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    item.isCompleted && styles.checkboxCompleted,
-                  ]}
-                >
-                  {item.isCompleted && (
-                    <MaterialIcons name="check" size={16} color="#fff" />
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <Text
-                    style={[
-                      styles.itemName,
-                      item.isCompleted && styles.itemNameCompleted,
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                  <View style={styles.itemDetailsRow}>
-                    <Text style={styles.itemDetailText}>
-                      {item.quantity} {item.unit}
-                    </Text>
-                    {item.price ? (
-                      <Text style={styles.itemDetailPrice}>
-                        • {formatCurrency(item.price)}/u
-                      </Text>
-                    ) : null}
-                  </View>
-                  {item.notes ? (
-                    <Text style={styles.itemNotes} numberOfLines={1}>
-                      {item.notes}
-                    </Text>
-                  ) : null}
-                </View>
-                <View style={styles.itemTotalContainer}>
-                  <Text style={[styles.itemTotal, item.isCompleted && styles.itemTotalCompleted]}>
-                    {formatCurrency((item.price || 0) * item.quantity)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </ScrollView>
+        {/* ── Title + progress ── */}
+        <View style={[s.titleWrap, { backgroundColor: C.headerBg }]}>
+          <Text style={[s.listTitle, { color: C.text }]}>{list.name}</Text>
+          <Text style={[s.listSub, { color: C.textMuted }]}>
+            {completedCount} de {totalCount} completados
+          </Text>
 
-        <View style={styles.totalContainer}>
-          <View>
-            <Text style={styles.totalLabel}>Subtotal Est.</Text>
-            <Text style={styles.totalAmount}>{formatCurrency(list.totalAmount)}</Text>
+          {/* progress bar */}
+          <View style={[s.progressBg, { backgroundColor: isDark ? '#27272A' : '#E2E8F0' }]}>
+            <View style={[s.progressFill, {
+              width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
+              backgroundColor: PRIMARY,
+            }]} />
           </View>
-          {list.status === 'open' && (
-            <TouchableOpacity style={styles.checkoutButton} onPress={closeList}>
-              <Text style={styles.checkoutButtonText}>Finalizar</Text>
+        </View>
+
+        {/* ── Items SectionList ── */}
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item._id ?? item.name}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={s.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />
+          }
+          renderSectionHeader={({ section }) => (
+            <Text style={[s.sectionLabel, { color: C.sectionLabel }]}>{section.title.toUpperCase()}</Text>
+          )}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={s.itemRow}
+              onPress={() => toggleItem(item._id!)}
+              onLongPress={() => handleItemLongPress(item)}
+              activeOpacity={0.65}
+            >
+              {/* checkbox */}
+              <View style={[
+                s.check,
+                { borderColor: item.isCompleted ? PRIMARY : C.checkBorder },
+                item.isCompleted && s.checkDone,
+              ]}>
+                {item.isCompleted && <MaterialIcons name="check" size={13} color="#fff" />}
+              </View>
+
+              {/* name */}
+              <Text style={[
+                s.itemName,
+                { color: item.isCompleted ? C.completedTxt : C.text },
+                item.isCompleted && s.itemNameDone,
+              ]}>
+                {item.name}
+              </Text>
+
+              {/* quantity */}
+              <Text style={[s.itemQty, { color: C.textMuted }]}>
+                {item.quantity} {item.unit}
+              </Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <View style={s.emptyWrap}>
+              <MaterialIcons name="add-shopping-cart" size={52} color={PRIMARY} style={{ opacity: 0.35 }} />
+              <Text style={[s.emptyTxt, { color: C.textMuted }]}>Tu lista está vacía</Text>
+              <Text style={[s.emptySub, { color: C.textSub }]}>Toca + para agregar productos</Text>
+            </View>
+          }
+        />
+
+        {/* ── Total bar + Checkout ── */}
+        <View style={[s.totalBar, { backgroundColor: C.surface, borderTopColor: C.border }]}>
+          <View>
+            <Text style={[s.totalLabel, { color: C.textMuted }]}>TOTAL EST.</Text>
+            <Text style={[s.totalAmt, { color: C.text }]}>{fmt(list.totalAmount)}</Text>
+          </View>
+          {isOpen && (
+            <TouchableOpacity style={s.checkoutBtn} onPress={toggleListStatus}>
+              <Text style={s.checkoutTxt}>Finalizar</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {list.status === 'open' && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => {
-              setEditingItem(null);
-              setItemName('');
-              setItemQuantity('1');
-              setItemUnit('unid');
-              setItemPrice('0');
-              setItemNotes('');
-              setIsModalVisible(true);
-            }}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons name="add" size={32} color="#fff" />
-          </TouchableOpacity>
+        {/* ── Action bar (mic | FAB+ | qr) ── */}
+        {isOpen && (
+          <View style={[s.actionBar, { backgroundColor: C.actionBar, borderTopColor: C.border }]}>
+            {/* mic */}
+            <TouchableOpacity style={s.actionBtn}>
+              <MaterialIcons name="mic" size={24} color={C.textMuted} />
+            </TouchableOpacity>
+
+            {/* FAB */}
+            <TouchableOpacity style={s.fabSmall} onPress={openAddModal} activeOpacity={0.85}>
+              <MaterialIcons name="add" size={26} color="#fff" />
+            </TouchableOpacity>
+
+            {/* QR */}
+            <TouchableOpacity style={s.actionBtn}>
+              <MaterialIcons name="qr-code-scanner" size={24} color={C.textMuted} />
+            </TouchableOpacity>
+          </View>
         )}
 
-        {/* Add Product Modal */}
+        {/* ── Modal: add / edit product ── */}
         <Modal
-          visible={isModalVisible}
+          visible={modalVisible}
           animationType="slide"
-          transparent={true}
-          onRequestClose={() => setIsModalVisible(false)}
+          transparent
+          onRequestClose={resetForm}
         >
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.modalContent}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {editingItem?._id ? 'Editar Producto' : 'Agregar Producto'}
-                </Text>
-                <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                  <MaterialIcons name="close" size={24} color="#666" />
-                </TouchableOpacity>
-              </View>
+          <View style={s.modalOverlay}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.modalSheet}>
+              <View style={[s.modalContent, { backgroundColor: isDark ? '#1C1C1E' : '#fff' }]}>
+                {/* handle */}
+                <View style={[s.handle, { backgroundColor: isDark ? '#3F3F46' : '#E2E8F0' }]} />
 
-              <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
-                <CustomInput
-                  label="Nombre del Producto"
-                  value={itemName}
-                  onChangeText={setItemName}
-                  placeholder="Ej: Leche"
-                  leftIcon="shopping-cart"
-                  isLightThemeDefault={true}
-                />
-
-                <View style={styles.inputRow}>
-                  <View style={{ flex: 1, marginRight: 10 }}>
-                    <CustomInput
-                      label="Cantidad"
-                      value={itemQuantity}
-                      onChangeText={setItemQuantity}
-                      placeholder="1"
-                      isLightThemeDefault={true}
-                    />
-                  </View>
-                  <View style={{ flex: 1.5 }}>
-                    <CustomInput
-                      label="Unidad"
-                      value={itemUnit}
-                      onChangeText={setItemUnit}
-                      placeholder="unid, kg, lt..."
-                      isLightThemeDefault={true}
-                    />
-                  </View>
+                <View style={s.modalHeader}>
+                  <Text style={[s.modalTitle, { color: C.text }]}>
+                    {editingItem?._id ? 'Editar Producto' : 'Agregar Producto'}
+                  </Text>
+                  <TouchableOpacity onPress={resetForm}>
+                    <MaterialIcons name="close" size={22} color={C.textMuted} />
+                  </TouchableOpacity>
                 </View>
 
-                <CustomInput
-                  label="Precio Unitario (Opcional)"
-                  value={itemPrice}
-                  onChangeText={setItemPrice}
-                  placeholder="0.00"
-                  isLightThemeDefault={true}
-                />
-
-                <CustomInput
-                  label="Notas"
-                  value={itemNotes}
-                  onChangeText={setItemNotes}
-                  placeholder="Marca, detalles..."
-                  isLightThemeDefault={true}
-                />
-
-                <CustomButton
-                  title={editingItem?._id ? 'Guardar Cambios' : 'Agregar a la Lista'}
-                  onPress={handleAddItem}
-                  isLoading={isAddingItem}
-                  style={styles.addBtn}
-                />
-                <View style={{ height: 40 }} />
-              </ScrollView>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <CustomInput
+                    label="Nombre"
+                    value={itemName}
+                    onChangeText={setItemName}
+                    placeholder="Ej: Leche"
+                    leftIcon="shopping-cart"
+                    isLightThemeDefault={!isDark}
+                  />
+                  <View style={s.inputRow}>
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                      <CustomInput
+                        label="Cantidad"
+                        value={itemQuantity}
+                        onChangeText={setItemQuantity}
+                        placeholder="1"
+                        isLightThemeDefault={!isDark}
+                      />
+                    </View>
+                    <View style={{ flex: 1.5 }}>
+                      <CustomInput
+                        label="Unidad"
+                        value={itemUnit}
+                        onChangeText={setItemUnit}
+                        placeholder="unid, kg…"
+                        isLightThemeDefault={!isDark}
+                      />
+                    </View>
+                  </View>
+                  <CustomInput
+                    label="Precio unit. (opcional)"
+                    value={itemPrice}
+                    onChangeText={setItemPrice}
+                    placeholder="0.00"
+                    isLightThemeDefault={!isDark}
+                  />
+                  <CustomInput
+                    label="Notas"
+                    value={itemNotes}
+                    onChangeText={setItemNotes}
+                    placeholder="Marca, detalles…"
+                    isLightThemeDefault={!isDark}
+                  />
+                  <CustomButton
+                    title={editingItem?._id ? 'Guardar cambios' : 'Agregar a la lista'}
+                    onPress={handleSave}
+                    isLoading={isAddingItem}
+                    style={{ marginTop: 20, borderRadius: 16 }}
+                  />
+                  <View style={{ height: 40 }} />
+                </ScrollView>
+              </View>
             </KeyboardAvoidingView>
           </View>
         </Modal>
@@ -465,277 +450,106 @@ export default function ShoppingListDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
+// ─── styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingTxt: { fontSize: 15, fontWeight: '500' },
+
+  // header
   header: {
-    paddingTop: 60,
-    paddingBottom: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  headerCenter: { flex: 1 },
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99,
   },
-  headerContent: {
-    flex: 1,
-    marginLeft: 15,
+  statusDot: { width: 7, height: 7, borderRadius: 3.5 },
+  statusTxt: { fontSize: 12, fontWeight: '700' },
+
+  // title
+  titleWrap: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 18 },
+  listTitle: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5 },
+  listSub: { fontSize: 13, fontWeight: '400', marginTop: 2, marginBottom: 14 },
+  progressBg: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 2 },
+
+  // section list
+  listContent: { paddingHorizontal: 24, paddingBottom: 200 },
+  sectionLabel: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 1.3,
+    textTransform: 'uppercase', marginTop: 24, marginBottom: 14,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#fff',
-    fontFamily: 'SF',
+
+  // item row
+  itemRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 14, gap: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(148,163,184,0.15)',
   },
-  headerSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginTop: 2,
-    fontFamily: 'SF',
+  check: {
+    width: 24, height: 24, borderRadius: 12, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  actionButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  checkDone: { backgroundColor: PRIMARY, borderColor: PRIMARY },
+  itemName: { flex: 1, fontSize: 15, fontWeight: '500' },
+  itemNameDone: { textDecorationLine: 'line-through' },
+  itemQty: { fontSize: 13 },
+
+  // empty
+  emptyWrap: { alignItems: 'center', paddingTop: 80, gap: 10 },
+  emptyTxt: { fontSize: 18, fontWeight: '600' },
+  emptySub: { fontSize: 13 },
+
+  // total bar
+  totalBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, paddingVertical: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#E9ECEF',
-    marginHorizontal: 20,
-    marginTop: -3,
-    borderRadius: 3,
-    overflow: 'hidden',
+  totalLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  totalAmt: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
+  checkoutBtn: {
+    backgroundColor: PRIMARY, borderRadius: 16,
+    paddingHorizontal: 22, paddingVertical: 12,
+    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-    borderRadius: 3,
+  checkoutTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
+
+  // action bar (bottom)
+  actionBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 44, paddingVertical: 12, paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    backdropFilter: 'blur(20px)',
   },
-  scrollView: {
-    flex: 1,
+  actionBtn: { padding: 10 },
+  fabSmall: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: PRIMARY,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: -20,
+    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  itemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF803E',
-  },
-  itemCardCompleted: {
-    borderLeftColor: '#4CAF50',
-    opacity: 0.8,
-    backgroundColor: '#F1F3F5',
-  },
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#FF803E',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  checkboxCompleted: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#343A40',
-    fontFamily: 'SF',
-  },
-  itemNameCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#ADB5BD',
-  },
-  itemDetailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  itemDetailText: {
-    fontSize: 13,
-    color: '#6C757D',
-    fontWeight: '600',
-  },
-  itemDetailPrice: {
-    fontSize: 13,
-    color: '#6C757D',
-    marginLeft: 5,
-  },
-  itemNotes: {
-    fontSize: 12,
-    color: '#ADB5BD',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  itemTotalContainer: {
-    alignItems: 'flex-end',
-    marginLeft: 10,
-  },
-  itemTotal: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#FF803E',
-    fontFamily: 'SF',
-  },
-  itemTotalCompleted: {
-    color: '#ADB5BD',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 100,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#DEE2E6',
-    marginTop: 20,
-    fontFamily: 'SF',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#CED4DA',
-    marginTop: 8,
-    fontFamily: 'SF',
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 25,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F3F5',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  totalLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#6C757D',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  totalAmount: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#343A40',
-    fontFamily: 'SF',
-  },
-  checkoutButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 15,
-    elevation: 5,
-  },
-  checkoutButtonText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 15,
-    fontFamily: 'SF',
-  },
-  fab: {
-    position: 'absolute',
-    right: 25,
-    bottom: 110,
-    width: 65,
-    height: 65,
-    borderRadius: 20,
-    backgroundColor: '#FF6C37',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#FF6C37',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    transform: [{ rotate: '45deg' }],
-  },
-  loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: '#6C757D',
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
-    padding: 25,
-    maxHeight: '90%',
-  },
+
+  // modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  modalSheet: { maxHeight: '90%' },
+  modalContent: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24 },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 24,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#343A40',
-    fontFamily: 'SF',
-  },
-  modalForm: {
-    width: '100%',
-  },
-  inputRow: {
-    flexDirection: 'row',
-    width: '100%',
-  },
-  addBtn: {
-    marginTop: 20,
-    backgroundColor: '#FF6C37',
-    borderRadius: 15,
-    height: 55,
-  }
+  modalTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
+  inputRow: { flexDirection: 'row' },
 });

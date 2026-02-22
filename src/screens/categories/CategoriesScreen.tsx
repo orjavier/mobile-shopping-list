@@ -1,5 +1,6 @@
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
+import CustomTabBar from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
 import { ICategory } from '@/interfaces/category.interface';
 import { categoryRepository } from '@/repositories/category.repository';
@@ -268,6 +269,9 @@ export default function CategoriesScreen() {
           </View>
         </BottomSheetView>
       </BottomSheet>
+
+      {/* ── Custom Tab Bar ── */}
+      <CustomTabBar activeRoute="/(tabs)/categories" />
     </LinearGradient>
   );
 }
