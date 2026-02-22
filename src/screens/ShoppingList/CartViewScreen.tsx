@@ -94,16 +94,11 @@ export default function CartViewScreen() {
      const sheetRef = useRef<BottomSheet>(null);
      const editBsRef = useRef<BottomSheet>(null);
 
-     useEffect(() => {
-          sheetRef.current?.snapToIndex(-1);
-          editBsRef.current?.snapToIndex(-1);
-     }, []);
-
      const [searchProduct, setSearchProduct] = useState('');
      const { height: SCREEN_H } = useWindowDimensions();
 
-     const snapPoints = useMemo(() => ['1%', '60%'], [SCREEN_H]);
-     const editSnapPoints = useMemo(() => ['1%', '55%'], [SCREEN_H]);
+     const snapPoints = useMemo(() => ['60%', '90%'], []);
+     const editSnapPoints = useMemo(() => ['55%', '90%'], []);
 
      // Edit state
      const [editName, setEditName] = useState('');
@@ -209,7 +204,7 @@ export default function CartViewScreen() {
           setEditName(list.name);
           setEditStatus(list.status || 'open');
           setEditTotalAmount(list.totalAmount?.toString() || '0');
-          editBsRef.current?.snapToIndex(1);
+          editBsRef.current?.expand();
      };
 
      const handleSaveEdit = async () => {
@@ -289,7 +284,7 @@ export default function CartViewScreen() {
                     <TouchableOpacity onPress={() => router.back()} style={[s.backBtn, { backgroundColor: isDark ? '#2D2D2D' : '#F1F5F9' }]}>
                          <MaterialIcons name="arrow-back" size={20} color={C.text} />
                     </TouchableOpacity>
-                    <Text style={[s.headerTitle, { color: C.text }]}>{list?.name || 'Carrito'}</Text>
+                    <Text style={[s.headerTitle, { color: C.text }]}>{list?.name || 'Carrito'} </Text>
                     <TouchableOpacity onPress={openEditSheet} style={[s.backBtn, { backgroundColor: isDark ? '#2D2D2D' : '#F1F5F9' }]}>
                          <MaterialIcons name="settings" size={20} color={C.text} />
                     </TouchableOpacity>
@@ -367,7 +362,7 @@ export default function CartViewScreen() {
                               <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
                                    <MaterialIcons name="mic" size={26} color={C.textMuted} />
                               </TouchableOpacity>
-                              <TouchableOpacity style={s.fab} onPress={() => sheetRef.current?.snapToIndex(1)} activeOpacity={0.8}>
+                              <TouchableOpacity style={s.fab} onPress={() => sheetRef.current?.expand()} activeOpacity={0.8}>
                                    <MaterialIcons name="add" size={28} color="#fff" />
                               </TouchableOpacity>
 
