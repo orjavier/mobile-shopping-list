@@ -3,6 +3,7 @@ export const API_URL =
 
 export const API_ENDPOINTS = {
   CATEGORIES: "/categories",
+  PRODUCTS: "/products",
   SHOPPING_LISTS: "/shopping-lists",
   USERS: "/users",
 };

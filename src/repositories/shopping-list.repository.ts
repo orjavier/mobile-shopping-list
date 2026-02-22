@@ -17,10 +17,8 @@ export class ShoppingListRepository {
       const response = await apiService.get<any>(
         `${API_ENDPOINTS.SHOPPING_LISTS}/${id}`,
       );
-      console.log('[ShoppingListRepo getById] response:', JSON.stringify(response));
       // Handle both wrapped and unwrapped responses
       const data = response.data || response || null;
-      console.log('[ShoppingListRepo getById] data retornado:', JSON.stringify(data));
       return data;
     } catch (error: unknown) {
       console.error("Error getting shopping list by id:", error);
@@ -54,13 +52,10 @@ export class ShoppingListRepository {
   }
 
   async addItem(listId: string, item: unknown): Promise<IItemProduct> {
-    console.log('[ShoppingListRepo] addItem - listId:', listId);
-    console.log('[ShoppingListRepo] addItem - item:', JSON.stringify(item));
     const response = await apiService.post<any>(
       `${API_ENDPOINTS.SHOPPING_LISTS}/${listId}/items`,
       item,
     );
-    console.log('[ShoppingListRepo] addItem - response:', JSON.stringify(response));
     return response.data || response;
   }
 
@@ -81,6 +76,14 @@ export class ShoppingListRepository {
       console.error("Error deleting item:", error);
       throw error;
     }
+  }
+
+  async updateItem(itemId: string, item: unknown): Promise<IItemProduct> {
+    const response = await apiService.patch<any>(
+      `${API_ENDPOINTS.SHOPPING_LISTS}/items/${itemId}`,
+      item,
+    );
+    return response.data || response;
   }
 }
 

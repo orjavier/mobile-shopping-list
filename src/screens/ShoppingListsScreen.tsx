@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  Modal,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
+  TouchableOpacity,
 } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
+import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
-import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -81,36 +81,28 @@ export default function ShoppingListsScreen() {
   };
 
   const openCreateModal = () => {
-    console.log('[ShoppingLists] Abriendo modal de creación');
     setNewListName('');
     setIsModalVisible(true);
   };
 
   const handleCreateList = async () => {
-    console.log('[ShoppingLists] handleCreateList llamado, name:', newListName);
-    
+
     if (!newListName.trim()) {
       showToast.error('Error', 'El nombre no puede estar vacío');
       return;
     }
 
     if (!user?._id) {
-      console.log('[ShoppingLists] Usuario no autenticado, user:', user);
       showToast.error('Error', 'Usuario no autenticado');
       return;
     }
 
     setIsCreating(true);
-    
+
     try {
-      console.log('[ShoppingLists] Creando lista:', { name: newListName.trim(), createdBy: user._id });
-      
       const dto = new CreateShoppingListDTO(newListName.trim(), user._id);
-      console.log('[ShoppingLists] DTO creado:', JSON.stringify(dto));
-      
       const newList = await shoppingListRepository.create(dto);
-      console.log('[ShoppingLists] Lista creada response:', JSON.stringify(newList));
-      
+
       showToast.success('Éxito', 'Lista creada correctamente');
       setIsModalVisible(false);
       fetchLists();
@@ -258,7 +250,7 @@ export default function ShoppingListsScreen() {
         transparent={true}
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
@@ -269,7 +261,7 @@ export default function ShoppingListsScreen() {
                 <MaterialIcons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.modalBody}>
               <Text style={styles.inputLabel}>Nombre de la lista</Text>
               <TextInput
@@ -283,13 +275,13 @@ export default function ShoppingListsScreen() {
             </View>
 
             <View style={styles.modalFooter}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setIsModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.createButton, isCreating && styles.createButtonDisabled]}
                 onPress={handleCreateList}
                 disabled={isCreating}

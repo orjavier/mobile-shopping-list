@@ -32,27 +32,13 @@ export class UserRepository {
     email: string,
     password: string,
   ) {
-    console.log("[UserRepo] Iniciando registro con:", {
-      firstName,
-      lastName,
-      email,
-    });
-
     const dto = new RegisterDTO(firstName, lastName, email, password);
-    console.log("[UserRepo] DTO creado:", JSON.stringify(dto));
-
     try {
-      console.log("[UserRepo] Haciendo POST a /auth/register");
       const response = await apiService.post<any>("/auth/register", dto);
 
-      console.log("[UserRepo] Respuesta completa:", JSON.stringify(response));
-      console.log("[UserRepo] Response.data:", JSON.stringify(response.data));
-
       const userData = response.data?.user || response.data;
-      console.log("[UserRepo] UserData:", JSON.stringify(userData));
 
       if (response.data?.token && userData?._id) {
-        console.log("[UserRepo] Token encontrado, guardando auth");
         const user = {
           _id: userData._id || userData.id,
           firstName: userData.firstName,
@@ -62,7 +48,6 @@ export class UserRepository {
           secure_url: userData.secure_url,
         };
         useAuthStore.getState().setAuth(user, response.data.token);
-        console.log("[UserRepo] Usuario guardado exitosamente");
         return user;
       }
 

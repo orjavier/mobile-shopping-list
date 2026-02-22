@@ -30,6 +30,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categorías',
+          tabBarIcon: ({ color }) => <TabBarIcon name="folder" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="products"
+        options={{
+          title: 'Productos',
+          tabBarIcon: ({ color }) => <TabBarIcon name="archive" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="two"
         options={{
           title: 'Historial',

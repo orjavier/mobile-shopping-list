@@ -9,18 +9,24 @@ import apiService from "../services/api.service";
 
 export class CategoryRepository {
   async findAll(): Promise<ICategory[]> {
-    const response = await apiService.get<StandardListResponse<ICategory>>(
+    const response = await apiService.get<ICategory[] | StandardListResponse<ICategory>>(
       API_ENDPOINTS.CATEGORIES,
     );
-    return response.data!;
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return (response as StandardListResponse<ICategory>).data || [];
   }
 
   async findById(id: string): Promise<ICategory | null> {
     try {
-      const response = await apiService.get<StandardSingleResponse<ICategory>>(
+      const response = await apiService.get<ICategory | StandardSingleResponse<ICategory>>(
         `${API_ENDPOINTS.CATEGORIES}/${id}`,
       );
-      return response.data ?? null;
+      if (Array.isArray(response) || !('data' in response)) {
+        return null;
+      }
+      return (response as StandardSingleResponse<ICategory>).data ?? null;
     } catch (error: unknown) {
       console.error("Error fetching category by id:", error);
       return null;
@@ -28,19 +34,25 @@ export class CategoryRepository {
   }
 
   async create(data: CreateCategoryDTO): Promise<ICategory> {
-    const response = await apiService.post<StandardSingleResponse<ICategory>>(
+    const response = await apiService.post<ICategory | StandardSingleResponse<ICategory>>(
       API_ENDPOINTS.CATEGORIES,
       data,
     );
-    return response.data!;
+    if ('data' in response) {
+      return (response as StandardSingleResponse<ICategory>).data!;
+    }
+    return response as ICategory;
   }
 
   async update(id: string, data: UpdateCategoryDTO): Promise<ICategory> {
-    const response = await apiService.patch<StandardSingleResponse<ICategory>>(
+    const response = await apiService.patch<ICategory | StandardSingleResponse<ICategory>>(
       `${API_ENDPOINTS.CATEGORIES}/${id}`,
       data,
     );
-    return response.data!;
+    if ('data' in response) {
+      return (response as StandardSingleResponse<ICategory>).data!;
+    }
+    return response as ICategory;
   }
 
   async delete(id: string): Promise<void> {

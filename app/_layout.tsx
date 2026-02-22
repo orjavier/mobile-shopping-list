@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '@/stores/authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -68,10 +69,10 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <RootLayoutNav initialRoute={initialRoute} />
       <Toast />
-    </>
+    </GestureHandlerRootView>
   );
 }
 

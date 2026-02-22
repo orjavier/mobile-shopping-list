@@ -41,6 +41,9 @@ export default function ShoppingListDetailScreen() {
   const [itemPrice, setItemPrice] = useState('0');
   const [itemNotes, setItemNotes] = useState('');
 
+  // Edit Item State
+  const [editingItem, setEditingItem] = useState<IItemProduct | null>(null);
+
   const user = useAuthStore((state) => state.user);
 
   const fetchList = useCallback(async () => {
@@ -48,7 +51,6 @@ export default function ShoppingListDetailScreen() {
 
     try {
       const data = await shoppingListRepository.getById(id);
-      console.log('[fetchList] Data recibida:', JSON.stringify(data));
       setList(data);
     } catch (error: unknown) {
       console.error('[fetchList] Error:', error);
@@ -70,11 +72,8 @@ export default function ShoppingListDetailScreen() {
 
   const toggleItem = async (itemId: string) => {
     try {
-      console.log('[toggleItem] Antes de API call, itemId:', itemId);
       await shoppingListRepository.toggleItemCompleted(itemId);
-      console.log('[toggleItem] Después de API call, llamando fetchList');
       await fetchList();
-      console.log('[toggleItem] fetchList completado');
     } catch (error: unknown) {
       console.error('[toggleItem] Error:', error);
       showToast.error('Error', 'No se pudo actualizar el item');
@@ -82,63 +81,90 @@ export default function ShoppingListDetailScreen() {
   };
 
   const handleAddItem = async () => {
-    console.log('[ListDetail] handleAddItem llamado');
-    
     if (!itemName.trim()) {
       showToast.error('Error', 'El nombre es obligatorio');
       return;
     }
 
     if (!list?._id || !user?._id) {
-      console.log('[ListDetail] Error: list._id o user._id faltante', { listId: list?._id, userId: user?._id });
       showToast.error('Error', 'Usuario no autenticado');
       return;
     }
 
     setIsAddingItem(true);
     try {
-      const newItem = {
-        name: itemName.trim(),
-        quantity: parseFloat(itemQuantity) || 1,
-        unit: itemUnit.trim() || 'unid',
-        price: parseFloat(itemPrice) || 0,
-        notes: itemNotes.trim(),
-        isCompleted: false,
-        memberId: String(user._id),
-      };
+      if (editingItem?._id) {
+        // Edit mode
+        const updatedItem = {
+          name: itemName.trim(),
+          quantity: parseFloat(itemQuantity) || 1,
+          unit: itemUnit.trim() || 'unid',
+          price: parseFloat(itemPrice) || 0,
+          notes: itemNotes.trim(),
+        };
 
-      console.log('[ListDetail] Agregando item a lista:', { listId: list._id, item: newItem });
+        await shoppingListRepository.updateItem(editingItem._id, updatedItem);
+        showToast.success('Éxito', 'Producto actualizado');
+      } else {
+        // Add mode
+        const newItem = {
+          name: itemName.trim(),
+          quantity: parseFloat(itemQuantity) || 1,
+          unit: itemUnit.trim() || 'unid',
+          price: parseFloat(itemPrice) || 0,
+          notes: itemNotes.trim(),
+          isCompleted: false,
+          memberId: String(user._id),
+        };
 
-      await shoppingListRepository.addItem(list._id, newItem);
-
-      console.log('[ListDetail] Item agregado exitosamente');
+        await shoppingListRepository.addItem(list._id, newItem);
+        showToast.success('Éxito', 'Producto agregado');
+      }
 
       // Reset and close
-      setItemName('');
-      setItemQuantity('1');
-      setItemUnit('unid');
-      setItemPrice('0');
-      setItemNotes('');
-      setIsModalVisible(false);
-
-      showToast.success('Éxito', 'Producto agregado');
+      resetItemForm();
       fetchList();
     } catch (error: unknown) {
-      console.error('[ListDetail] Error al agregar item:', error);
-      showToast.error('Error', 'No se pudo agregar el producto');
+      console.error('[ListDetail] Error al guardar item:', error);
+      showToast.error('Error', 'No se pudo guardar el producto');
     } finally {
       setIsAddingItem(false);
     }
+  };
+
+  const resetItemForm = () => {
+    setItemName('');
+    setItemQuantity('1');
+    setItemUnit('unid');
+    setItemPrice('0');
+    setItemNotes('');
+    setEditingItem(null);
+    setIsModalVisible(false);
   };
 
   const deleteItem = async (itemId: string) => {
     if (!list?._id) return;
 
     Alert.alert(
-      'Eliminar Producto',
-      '¿Estás seguro de que quieres eliminar este producto?',
+      'Opciones',
+      '¿Qué deseas hacer con este producto?',
       [
         { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Editar',
+          onPress: () => {
+            const item = list?.itemsProduct?.find((i) => i._id === itemId);
+            if (item) {
+              setEditingItem(item);
+              setItemName(item.name);
+              setItemQuantity(String(item.quantity));
+              setItemUnit(item.unit);
+              setItemPrice(String(item.price || 0));
+              setItemNotes(item.notes || '');
+              setIsModalVisible(true);
+            }
+          },
+        },
         {
           text: 'Eliminar',
           style: 'destructive',
@@ -340,7 +366,15 @@ export default function ShoppingListDetailScreen() {
         {list.status === 'open' && (
           <TouchableOpacity
             style={styles.fab}
-            onPress={() => setIsModalVisible(true)}
+            onPress={() => {
+              setEditingItem(null);
+              setItemName('');
+              setItemQuantity('1');
+              setItemUnit('unid');
+              setItemPrice('0');
+              setItemNotes('');
+              setIsModalVisible(true);
+            }}
             activeOpacity={0.8}
           >
             <MaterialIcons name="add" size={32} color="#fff" />
@@ -360,7 +394,9 @@ export default function ShoppingListDetailScreen() {
               style={styles.modalContent}
             >
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Agregar Producto</Text>
+                <Text style={styles.modalTitle}>
+                  {editingItem?._id ? 'Editar Producto' : 'Agregar Producto'}
+                </Text>
                 <TouchableOpacity onPress={() => setIsModalVisible(false)}>
                   <MaterialIcons name="close" size={24} color="#666" />
                 </TouchableOpacity>
@@ -414,7 +450,7 @@ export default function ShoppingListDetailScreen() {
                 />
 
                 <CustomButton
-                  title="Agregar a la Lista"
+                  title={editingItem?._id ? 'Guardar Cambios' : 'Agregar a la Lista'}
                   onPress={handleAddItem}
                   isLoading={isAddingItem}
                   style={styles.addBtn}
