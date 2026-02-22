@@ -5,10 +5,11 @@
  * Position: absolute, bottom 0, z-index: 50.
  */
 
+import { useColorScheme } from '@/components/useColorScheme';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Dimensions, Platform, StyleSheet, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { Dimensions, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { Text } from '@/components/Themed';
 
@@ -29,7 +30,8 @@ export type TabRoute =
      | '/(tabs)/categories'
      | '/(tabs)/products'
      | '/(tabs)/two'
-     | '/(tabs)/profile';
+     | '/(tabs)/profile'
+     | '/settings';
 
 interface Tab {
      icon: string;
@@ -109,7 +111,7 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
 
                {/* ── FAB (floats above the bar center) ── */}
                <View style={tb.fabWrap}>
-                    <View style={[tb.fabOuter, { backgroundColor: C.fabCenter }]}>
+                    <View style={[tb.fabOuter, { backgroundColor: C.fabCenter, borderColor: 'transparent' }]}>
                          <TouchableOpacity style={tb.fabTouch} onPress={handleFab} activeOpacity={0.85}>
                               <LinearGradient
                                    colors={['#FF8C5A', PRIMARY]}
@@ -117,7 +119,7 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                                    end={{ x: 1, y: 1 }}
                                    style={tb.fabGrad}
                               >
-                                   <MaterialIcons name="add" size={30} color="#fff" />
+                                   <MaterialIcons name="add" size={26} color="#fff" />
                               </LinearGradient>
                          </TouchableOpacity>
                     </View>
@@ -137,11 +139,14 @@ const tb = StyleSheet.create({
           zIndex: 50,
      } as object,
      bar: {
-          width: W,
+          width: W - 20,
           height: TAB_H,
           backgroundColor: PRIMARY,
-          borderTopLeftRadius: 26,
-          borderTopRightRadius: 26,
+          borderTopLeftRadius: 50,
+          borderTopRightRadius: 50,
+          borderBottomLeftRadius: 50,
+          borderBottomRightRadius: 50,
+          marginBottom: 10,
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 8,
@@ -150,6 +155,7 @@ const tb = StyleSheet.create({
           shadowOpacity: 0.22,
           shadowRadius: 16,
           elevation: 20,
+
      },
      half: {
           flex: 1,
@@ -171,6 +177,7 @@ const tb = StyleSheet.create({
           width: FAB_OUTER_D,
           height: FAB_OUTER_D,
           borderRadius: FAB_OUTER_D / 2,
+          borderWidth: 3,
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',

@@ -9,12 +9,12 @@ import {
      StatusBar,
      StyleSheet,
      TouchableOpacity,
-     useColorScheme,
      View,
 } from 'react-native';
 
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 
 // ─── mock data ────────────────────────────────────────────────────────────────

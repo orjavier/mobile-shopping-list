@@ -2,7 +2,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 
@@ -81,6 +80,15 @@ export default function TabLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+        }}
+      />
+
+      {/* Cart — oculto del tab bar nativo, accesible por ruta */}
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'Cart',
+          href: null,          // no aparece en el tab bar nativo
         }}
       />
     </Tabs>

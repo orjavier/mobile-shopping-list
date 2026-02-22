@@ -1,11 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { Alert, Image, Platform, ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
-import CustomTabBar, { TAB_TOTAL } from '@/components/CustomTabBar';
-import { Text, View, useThemeColor } from '@/components/Themed';
+import { Text, useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -45,7 +44,19 @@ const ProfileScreen = () => {
      };
 
      return (
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor }}>
+               <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+               <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28 }} />
+
+               {/* Header with back button */}
+               <View style={[styles.headerRow, { backgroundColor }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                         <MaterialIcons name="arrow-back" size={24} color={textColor} />
+                    </TouchableOpacity>
+                    <Text style={[styles.headerTitle, { color: textColor }]}>Mi Perfil</Text>
+                    <View style={styles.backBtn} />
+               </View>
+
                <ScrollView style={[styles.container, { backgroundColor }]} contentContainerStyle={styles.content}>
                     <View style={styles.header}>
                          <View style={styles.avatarContainer}>
@@ -113,11 +124,8 @@ const ProfileScreen = () => {
                          onPress={handleLogout}
                          variant="outlined"
                     />
-                    <Text style={styles.versionText}>Versión 1.0.0</Text>
+                     <Text style={styles.versionText}>Versión 1.0.0</Text>
                </ScrollView>
-
-               {/* ── Custom Tab Bar ── */}
-               <CustomTabBar activeRoute="/(tabs)/profile" />
           </View>
      );
 }
@@ -146,7 +154,25 @@ const styles = StyleSheet.create({
      },
      content: {
           padding: 20,
-          paddingBottom: TAB_TOTAL + 40,
+          paddingBottom: 40,
+     },
+     headerRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+     },
+     backBtn: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     headerTitle: {
+          fontSize: 18,
+          fontWeight: '700',
      },
      header: {
           alignItems: 'center',

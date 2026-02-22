@@ -82,8 +82,8 @@ class ApiService {
         data,
         config,
       );
-      console.log("[API POST] Success:", response.status);
-      console.log("[API POST] Full response:", JSON.stringify(response));
+      //console.log("[API POST] Success:", response.status);
+      //console.log("[API POST] Full response:", JSON.stringify(response));
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {

@@ -1,4 +1,4 @@
-import { useColorScheme } from '@/components/useColorScheme';
+import { useTheme } from '@/theme';
 import React from 'react';
 import {
      ActivityIndicator,
@@ -31,7 +31,7 @@ const CustomButton = ({
      style,
      textStyle
 }: CustomButtonProps) => {
-     const colorScheme = useColorScheme();
+     const { isDarkMode } = useTheme();
 
      const COLORS = {
           primary: '#FF803E',
@@ -39,7 +39,19 @@ const CustomButton = ({
           warning: '#ffc107',
           white: '#ffffff',
           black: '#000000',
-          grey: colorScheme === 'dark' ? '#333333' : '#e0e0e0',
+          grey: isDarkMode ? '#333333' : '#e0e0e0',
+     };
+
+     const dynamicDisabledStyles = {
+          button: {
+               backgroundColor: isDarkMode ? '#333333' : '#cccccc',
+               borderColor: isDarkMode ? '#555555' : '#bbbbbb',
+               shadowOpacity: 0,
+               elevation: 0,
+          } as ViewStyle,
+          text: {
+               color: isDarkMode ? '#888888' : '#888888',
+          } as TextStyle,
      };
 
      const getVariantStyles = (): { button: ViewStyle; text: TextStyle } => {
@@ -54,7 +66,7 @@ const CustomButton = ({
                               elevation: 0,
                          },
                          text: {
-                              color: colorScheme === 'dark' ? COLORS.white : COLORS.black,
+                              color: isDarkMode ? '#ffffff' : '#000000',
                          },
                     };
                case 'danger':
@@ -74,7 +86,7 @@ const CustomButton = ({
                               shadowColor: COLORS.warning,
                          },
                          text: {
-                              color: colorScheme === 'dark' ? '#000' : '#000',
+                              color: isDarkMode ? '#ffffff' : '#000000',
                          },
                     };
                case 'primary':
@@ -100,17 +112,17 @@ const CustomButton = ({
                style={[
                     styles.button,
                     variantStyles.button,
-                    disabled && styles.disabledButton,
+                    disabled && dynamicDisabledStyles.button,
                     style,
                ]}
           >
                {isLoading ? (
-                    <ActivityIndicator color={variant === 'outlined' ? COLORS.primary : (variant === 'warning' ? '#000' : '#fff')} />
+                    <ActivityIndicator color={variant === 'outlined' ? COLORS.primary : (variant === 'warning' ? '#000000' : '#ffffff')} />
                ) : (
                     <Text style={[
                          styles.text,
                          variantStyles.text,
-                         disabled && styles.disabledText,
+                         disabled && dynamicDisabledStyles.text,
                          textStyle
                     ]}>
                          {title}
@@ -142,18 +154,8 @@ const styles = StyleSheet.create({
           }),
      },
      text: {
-          fontWeight: 'bold',
           fontSize: 17,
           fontFamily: 'SF',
-     },
-     disabledButton: {
-          backgroundColor: '#cccccc',
-          borderColor: '#bbbbbb',
-          shadowOpacity: 0,
-          elevation: 0,
-     },
-     disabledText: {
-          color: '#888888',
      },
 });
 

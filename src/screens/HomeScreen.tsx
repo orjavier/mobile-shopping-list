@@ -10,12 +10,13 @@ import {
      StyleSheet,
      TextInput,
      TouchableOpacity,
-     useColorScheme,
-     View,
+     View
 } from 'react-native';
 
+import AnimatedDrawer from '@/components/AnimatedDrawer';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { IProduct } from '@/interfaces/product.interface';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
@@ -32,6 +33,7 @@ const { width: W } = Dimensions.get('window');
 
 const LIGHT = {
      bg: '#FFFFFF',
+     surface: '#FFFFFF',
      headerBg: 'rgba(255,255,255,0.88)',
      searchBg: '#F1F5F9',
      text: '#0F172A',
@@ -51,6 +53,7 @@ const LIGHT = {
 
 const DARK = {
      bg: '#0F0F0F',
+     surface: '#1C1C1E',
      headerBg: 'rgba(15,15,15,0.90)',
      searchBg: '#1A1A1A',
      text: '#F1F5F9',
@@ -99,6 +102,7 @@ export default function HomeScreen() {
      const [isLoading, setIsLoading] = useState(true);
      const [refreshing, setRefreshing] = useState(false);
      const [search, setSearch] = useState('');
+     const [drawerVisible, setDrawerVisible] = useState(false);
 
      const fetchAll = useCallback(async () => {
           if (!user?._id) return;
@@ -207,7 +211,12 @@ export default function HomeScreen() {
                {/* ── Sticky Header ── */}
                <View style={[s.header, { backgroundColor: C.headerBg }]}>
                     <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
-                    <Text style={[s.hTitle, { color: C.sectionTitle }]}>Buscar</Text>
+                    <View style={s.headerRow}>
+                         <Text style={[s.hTitle, { color: C.sectionTitle }]}></Text>
+                         <TouchableOpacity onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#F1F5F9' }]}>
+                              <MaterialIcons name="menu" size={24} color={C.text} />
+                         </TouchableOpacity>
+                    </View>
                     <View style={[s.searchBar, { backgroundColor: C.searchBg }]}>
                          <MaterialIcons name="search" size={20} color={C.textSub} />
                          <TextInput
@@ -237,9 +246,9 @@ export default function HomeScreen() {
                     {/* Recent Lists */}
                     <View style={s.section}>
                          <View style={s.secHead}>
-                              <Text style={[s.secTitle, { color: C.sectionTitle }]}>Recent Lists</Text>
+                              <Text style={[s.secTitle, { color: C.sectionTitle }]}>Listas recientes</Text>
                               <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/lists' as never)}>
-                                   <Text style={[s.seeAll, { color: PRIMARY }]}>See all</Text>
+                                   <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                               </TouchableOpacity>
                          </View>
                          {filtered.length === 0 ? (
@@ -266,9 +275,9 @@ export default function HomeScreen() {
                     {categories.length > 0 && (
                          <View style={s.section}>
                               <View style={s.secHead}>
-                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Recent Categories</Text>
+                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Categorias recientes</Text>
                                    <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/categories' as never)}>
-                                        <Text style={[s.seeAll, { color: PRIMARY }]}>See all</Text>
+                                        <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                                    </TouchableOpacity>
                               </View>
                               <View style={s.catRow}>
@@ -283,9 +292,9 @@ export default function HomeScreen() {
                     {products.length > 0 && (
                          <View style={s.section}>
                               <View style={s.secHead}>
-                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Recent Products</Text>
+                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Productos recientes</Text>
                                    <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/products' as never)}>
-                                        <Text style={[s.seeAll, { color: PRIMARY }]}>See all</Text>
+                                        <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todos</Text>
                                    </TouchableOpacity>
                               </View>
                               <View style={s.prodGrid}>
@@ -301,6 +310,9 @@ export default function HomeScreen() {
 
                {/* ── Custom Tab Bar ── */}
                <CustomTabBar activeRoute="/(tabs)" />
+
+               {/* ── Animated Drawer ── */}
+               <AnimatedDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
           </View>
      );
 }
@@ -325,9 +337,11 @@ const s = StyleSheet.create({
           elevation: 4,
      },
      hTitle: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5, marginBottom: 12 },
+     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+     menuBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
      searchBar: {
           flexDirection: 'row', alignItems: 'center',
-          borderRadius: 18, paddingHorizontal: 14, paddingVertical: 13, gap: 10,
+          borderRadius: 18, paddingHorizontal: 14, paddingVertical: 13, gap: 10, marginTop: 14,
      },
      searchInput: { flex: 1, fontSize: 14, padding: 0, margin: 0 },
 
@@ -375,4 +389,15 @@ const s = StyleSheet.create({
      pName: { fontSize: 11, fontWeight: '700', letterSpacing: -0.1 },
      pUnit: { fontSize: 9 },
      pPrice: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+
+     // drawer
+     drawerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+     drawer: { width: '100%', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 20, paddingBottom: 40, paddingHorizontal: 20 },
+     drawerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+     drawerUserName: { fontSize: 18, fontWeight: '700' },
+     drawerUserEmail: { fontSize: 13, marginTop: 2 },
+     drawerContent: { gap: 8 },
+     drawerItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14 },
+     drawerItemText: { flex: 1, fontSize: 15, fontWeight: '500' },
+     drawerFooter: { marginTop: 24 },
 });

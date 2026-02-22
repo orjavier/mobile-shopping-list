@@ -1,13 +1,13 @@
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
-import CustomTabBar from '@/components/CustomTabBar';
+import CustomTabBar, { PRIMARY } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { categoryRepository } from '@/repositories/category.repository';
 import { showToast } from '@/toast';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,8 +25,32 @@ const COLORS = [
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
 ];
 
+const LIGHT = {
+  bg: '#FFFFFF',
+  text: '#0F172A',
+  textSub: '#64748B',
+  cardBg: '#F1F5F9',
+  bottomSheetBg: '#FFFFFF',
+  handle: '#ddd',
+  colorLabel: '#666',
+};
+
+const DARK = {
+  bg: '#0F0F0F',
+  text: '#F1F5F9',
+  textSub: '#94A3B8',
+  cardBg: 'rgba(255,255,255,0.06)',
+  bottomSheetBg: '#1C1C1E',
+  handle: '#444',
+  colorLabel: '#94A3B8',
+};
+
 export default function CategoriesScreen() {
   const router = useRouter();
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const C = isDark ? DARK : LIGHT;
+
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,13 +61,11 @@ export default function CategoriesScreen() {
   const [categoryName, setCategoryName] = useState('');
   const [categoryColor, setCategoryColor] = useState(COLORS[0]);
 
-  const snapPoints = useMemo(() => ['50%'], []);
+  const snapPoints = useMemo(() => ['50%', '80%'], []);
 
   const fetchCategories = useCallback(async () => {
     try {
-      console.log('[Categories] Fetching categories...');
       const data = await categoryRepository.findAll();
-      console.log('[Categories] Data received:', JSON.stringify(data));
       setCategories(data || []);
     } catch (error: unknown) {
       console.error('Error fetching categories:', error);
@@ -149,29 +171,27 @@ export default function CategoriesScreen() {
 
   if (isLoading) {
     return (
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#fff" />
-        </View>
-      </LinearGradient>
+      <View style={[styles.container, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={PRIMARY} />
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.container}>
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Categorías</Text>
-        <Text style={styles.headerSubtitle}>
+    <View style={[styles.container, { backgroundColor: C.bg }]}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: C.text }]}>Categorías</Text>
+        <Text style={[styles.headerSubtitle, { color: C.textSub }]}>
           {categories.length} {categories.length === 1 ? 'categoría' : 'categorías'}
         </Text>
-      </View> */}
+      </View>
 
       <View style={styles.content}>
         {categories.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="folder-open" size={64} color="rgba(255,255,255,0.5)" />
-            <Text style={styles.emptyText}>No hay categorías</Text>
-            <Text style={styles.emptySubtext}>
+            <MaterialIcons name="folder-open" size={64} color={C.textSub} style={{ opacity: 0.5 }} />
+            <Text style={[styles.emptyText, { color: C.text }]}>No hay categorías</Text>
+            <Text style={[styles.emptySubtext, { color: C.textSub }]}>
               Toca el botón + para crear una
             </Text>
           </View>
@@ -183,7 +203,7 @@ export default function CategoriesScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#fff"
+                tintColor={PRIMARY}
               />
             }
             showsVerticalScrollIndicator={false}
@@ -191,39 +211,32 @@ export default function CategoriesScreen() {
             {categories.map((item) => (
               <TouchableOpacity
                 key={item._id || Math.random().toString()}
-                style={styles.categoryCard}
+                style={[styles.categoryCard, { backgroundColor: C.cardBg }]}
                 onPress={() => openEditSheet(item)}
                 onLongPress={() => handleDelete(item)}
                 activeOpacity={0.7}
               >
                 <View style={[styles.colorIndicator, { backgroundColor: item.color }]} />
-                <Text style={styles.categoryName}>{item.name}</Text>
-                <MaterialIcons name="chevron-right" size={24} color="#9E9E9E" />
+                <Text style={[styles.categoryName, { color: C.text }]}>{item.name}</Text>
+                <MaterialIcons name="chevron-right" size={24} color={C.textSub} />
               </TouchableOpacity>
             ))}
           </ScrollView>
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={openAddSheet}
-        activeOpacity={0.8}
-      >
-        <MaterialIcons name="add" size={32} color="#fff" />
-      </TouchableOpacity>
-
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose
+        animateOnMount={false}
         backdropComponent={renderBackdrop}
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.bottomSheetHandle}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: C.bottomSheetBg }]}
+        handleIndicatorStyle={[styles.bottomSheetHandle, { backgroundColor: C.handle }]}
       >
         <BottomSheetView style={styles.bottomSheetContent}>
-          <Text style={styles.bottomSheetTitle}>
+          <Text style={[styles.bottomSheetTitle, { color: C.text }]}>
             {editingCategory?._id ? 'Editar Categoría' : 'Nueva Categoría'}
           </Text>
 
@@ -234,7 +247,7 @@ export default function CategoriesScreen() {
             onChangeText={setCategoryName}
           />
 
-          <Text style={styles.colorLabel}>Color</Text>
+          <Text style={[styles.colorLabel, { color: C.colorLabel }]}>Color</Text>
           <View style={styles.colorGrid}>
             {COLORS.map((color) => (
               <TouchableOpacity
@@ -271,19 +284,14 @@ export default function CategoriesScreen() {
       </BottomSheet>
 
       {/* ── Custom Tab Bar ── */}
-      <CustomTabBar activeRoute="/(tabs)/categories" />
-    </LinearGradient>
+      <CustomTabBar activeRoute="/(tabs)/categories" onFabPress={openAddSheet} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     paddingTop: 60,
@@ -293,19 +301,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
   },
   content: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 20,
+    paddingTop: 8,
   },
   listContainer: {
     flex: 1,
@@ -323,26 +326,18 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
     marginTop: 8,
   },
   categoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   colorIndicator: {
     width: 40,
@@ -354,31 +349,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
   bottomSheetBackground: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   bottomSheetHandle: {
-    backgroundColor: '#ddd',
     width: 40,
   },
   bottomSheetContent: {
@@ -389,14 +365,12 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 20,
     textAlign: 'center',
   },
   colorLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginTop: 16,
     marginBottom: 12,
   },

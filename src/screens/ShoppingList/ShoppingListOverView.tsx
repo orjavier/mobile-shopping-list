@@ -11,22 +11,24 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import CustomButton from '@/components/CustomButton';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 
@@ -103,7 +105,9 @@ export default function ShoppingListOverView() {
   const [creating, setCreating] = useState(false);
 
   const bsRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['40%'], []);
+  const { height: SCREEN_H } = useWindowDimensions();
+  //const snapPoints = useMemo(() => [Math.round(SCREEN_H * 0.42)], [SCREEN_H]);
+  const snapPoints = useMemo(() => ['50%'], []);
 
   const fetchLists = useCallback(async () => {
     if (!user?._id) return;
@@ -215,7 +219,7 @@ export default function ShoppingListOverView() {
       />
 
       <View style={[s.header, { backgroundColor: C.headerBg }]}>
-        <Text style={[s.headerTitle, { color: C.text }]}>Shopping lists</Text>
+        <Text style={[s.headerTitle, { color: C.text }]}>Lista de Compras</Text>
       </View>
 
       <ScrollView
@@ -249,7 +253,7 @@ export default function ShoppingListOverView() {
 
         {/* Recently created */}
         <Text style={[s.sectionLabel, { color: C.sectionLabel, marginTop: 20 }]}>
-          RECENTLY CREATED
+          CREADO RECIENTEMENTE
         </Text>
 
         {loading ? (
@@ -271,23 +275,13 @@ export default function ShoppingListOverView() {
         )}
       </ScrollView>
 
-      {/* Create button */}
-      <View style={[s.createWrap, { paddingBottom: TAB_TOTAL + 8, backgroundColor: C.bg }]}>
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={[s.createBtn, { backgroundColor: C.btn }]}
-          onPress={openSheet}
-        >
-          <Text style={s.createTxt}>Create new list</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* BottomSheet: nueva lista */}
       <BottomSheet
         ref={bsRef}
         index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
+        animateOnMount={false}
+        enablePanDownToClose={true}
+        snapPoints={['50%']}  // ← SOLO esta línea
         backdropComponent={renderBackdrop}
         backgroundStyle={[s.sheetBg, { backgroundColor: C.card }]}
         handleIndicatorStyle={{ backgroundColor: C.textSub, width: 40, opacity: 0.35 }}
@@ -316,29 +310,28 @@ export default function ShoppingListOverView() {
               placeholderTextColor={C.textSub}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
-              autoFocus
             />
           </View>
 
           <View style={s.sheetBtns}>
-            <TouchableOpacity
-              style={[s.cancelBtn, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}
+            <CustomButton
+              title="Cancelar"
+              variant="outlined"
               onPress={() => bsRef.current?.close()}
-            >
-              <Text style={[s.cancelTxt, { color: C.textMuted }]}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[s.createBtn, creating && { opacity: 0.6 }]}
+              style={{ flex: 1 }}
+            />
+            <CustomButton
+              title={creating ? 'Creando...' : 'Crear lista'}
+              variant="primary"
               onPress={handleCreate}
-              disabled={creating}
-            >
-              <Text style={s.createTxt}>{creating ? 'Creando...' : 'Crear lista'}</Text>
-            </TouchableOpacity>
+              isLoading={creating}
+              style={{ flex: 1 }}
+            />
           </View>
         </BottomSheetView>
       </BottomSheet>
 
-      <CustomTabBar activeRoute="/(tabs)/lists" />
+      <CustomTabBar activeRoute="/(tabs)/lists" onFabPress={openSheet} />
     </View>
   );
 }

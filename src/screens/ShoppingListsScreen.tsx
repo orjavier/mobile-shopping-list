@@ -20,14 +20,14 @@ import {
   StatusBar,
   StyleSheet,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
-import { IShoppingList } from '@/interfaces/shopping-list.interface';
+import { IShoppingList, IShoppingListUpdate } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
@@ -108,9 +108,10 @@ interface RowProps {
   C: typeof LIGHT;
   onPress: () => void;
   onLongPress: () => void;
+  onSettingsPress: () => void;
 }
 
-function ListRow({ item, idx, isDark, C, onPress, onLongPress }: RowProps) {
+function ListRow({ item, idx, isDark, C, onPress, onLongPress, onSettingsPress }: RowProps) {
   const pal = paletteFor(idx, isDark);
   const count = item.itemsProduct?.length ?? 0;
   return (
@@ -127,7 +128,10 @@ function ListRow({ item, idx, isDark, C, onPress, onLongPress }: RowProps) {
         <Text style={[s.rowName, { color: C.text }]}>{item.name}</Text>
         <Text style={[s.rowSub, { color: C.textMuted }]}>{count} producto{count !== 1 ? 's' : ''}</Text>
       </View>
-      <MaterialIcons name="chevron-right" size={22} color={C.chevron} />
+      <TouchableOpacity onPress={onSettingsPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <MaterialIcons name="settings" size={20} color={C.textMuted} />
+      </TouchableOpacity>
+      <MaterialIcons name="chevron-right" size={22} color={C.chevron} style={{ marginLeft: 4 }} />
     </TouchableOpacity>
   );
 }
@@ -146,8 +150,17 @@ export default function ShoppingListsScreen() {
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
 
+  // Edit state
+  const [editingList, setEditingList] = useState<IShoppingList | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editStatus, setEditStatus] = useState<'open' | 'closed'>('open');
+  const [editTotalAmount, setEditTotalAmount] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const bsRef = useRef<BottomSheet>(null);
+  const editBsRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['40%'], []);
+  const editSnapPoints = useMemo(() => ['60%'], []);
 
   // ─── fetch ─────────────────────────────────────────────────────────────────
   const fetchLists = useCallback(async () => {
@@ -205,9 +218,40 @@ export default function ShoppingListsScreen() {
     ]);
   };
 
+  // ─── edit ─────────────────────────────────────────────────────────────────
+  const openEditSheet = (item: IShoppingList) => {
+    setEditingList(item);
+    setEditName(item.name);
+    setEditStatus(item.status || 'open');
+    setEditTotalAmount(item.totalAmount?.toString() || '0');
+    editBsRef.current?.expand();
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingList?._id) return;
+    const name = editName.trim();
+    if (!name) { showToast.error('Error', 'El nombre no puede estar vacío'); return; }
+    setSaving(true);
+    try {
+      const updateData: IShoppingListUpdate = {
+        name,
+        status: editStatus,
+        totalAmount: parseFloat(editTotalAmount) || 0,
+      };
+      await shoppingListRepository.update(editingList._id, updateData);
+      showToast.success('Éxito', 'Lista actualizada');
+      editBsRef.current?.close();
+      fetchLists();
+    } catch {
+      showToast.error('Error', 'No se pudo actualizar la lista');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderBackdrop = useCallback(
     (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.55} />
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.55} pressBehavior="close" />
     ), []
   );
 
@@ -268,6 +312,7 @@ export default function ShoppingListsScreen() {
                   C={C}
                   onPress={() => router.push(`/list/${item._id}` as never)}
                   onLongPress={() => handleDelete(item)}
+                  onSettingsPress={() => openEditSheet(item)}
                 />
               ))
             )}
@@ -299,6 +344,7 @@ export default function ShoppingListsScreen() {
                 C={C}
                 onPress={() => router.push(`/list/${item._id}` as never)}
                 onLongPress={() => handleDelete(item)}
+                onSettingsPress={() => openEditSheet(item)}
               />
             ))}
           </>
@@ -313,7 +359,7 @@ export default function ShoppingListsScreen() {
         ref={bsRef}
         index={-1}
         snapPoints={snapPoints}
-        enablePanDownToClose
+        enablePanDownToClose={true}
         backdropComponent={renderBackdrop}
         backgroundStyle={[s.sheetBg, { backgroundColor: C.sheetBg }]}
         handleIndicatorStyle={{ backgroundColor: C.textSub, width: 40, opacity: 0.35 }}
@@ -341,7 +387,6 @@ export default function ShoppingListsScreen() {
               placeholderTextColor={C.textSub}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
-              autoFocus
             />
           </View>
 
@@ -365,6 +410,8 @@ export default function ShoppingListsScreen() {
           </View>
         </BottomSheetView>
       </BottomSheet>
+
+
     </View>
   );
 }
