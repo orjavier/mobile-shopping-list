@@ -92,8 +92,13 @@ export default function ProductsScreen() {
     bottomSheetRef.current?.open();
   };
 
-  const closeSheet = () => {
+const closeSheet = () => {
     bottomSheetRef.current?.close();
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalVisible(false);
+    fetchData();
   };
 
   const handleSave = async () => {
@@ -350,16 +355,16 @@ export default function ProductsScreen() {
         </Pressable>
       </Modal>
 
-      {/* ── Category Selection Modal ── */}
+{/* ── Category Selection Modal ── */}
       <Modal
         visible={isCategoryModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsCategoryModalVisible(false)}
+        onRequestClose={handleCloseCategoryModal}
       >
         <Pressable
           style={styles.modalOverlay}
-          onPress={() => setIsCategoryModalVisible(false)}
+          onPress={handleCloseCategoryModal}
         >
           <View style={[styles.modalContent, { backgroundColor: Colors.bottomSheetBackgroundColor }]}>
             <Text style={[styles.modalTitle, { color: Colors.primaryTextColor }]}>Seleccionar Categoría</Text>

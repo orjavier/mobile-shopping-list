@@ -12,6 +12,7 @@ export interface IItemProduct {
   price?: number;
   notes?: string;
   order?: number;
+  category?: string;
 }
 
 export interface IItemProductCreate {
@@ -25,6 +26,7 @@ export interface IItemProductCreate {
   price?: number;
   notes?: string;
   order?: number;
+  category?: string;
 }
 
 export interface IItemProductUpdate {

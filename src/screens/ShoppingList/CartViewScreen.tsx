@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+     Alert,
      FlatList,
      Image,
      Platform,
@@ -20,9 +21,11 @@ import {
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import { Text } from '@/components/Themed';
+import { ICategory } from '@/interfaces/category.interface';
 import { IItemProduct } from '@/interfaces/item-product.interface';
 import { IProduct } from '@/interfaces/product.interface';
 import { IShoppingList, IShoppingListUpdate } from '@/interfaces/shopping-list.interface';
+import { categoryRepository } from '@/repositories/category.repository';
 import { productRepository } from '@/repositories/product.repository';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
@@ -53,6 +56,7 @@ export default function CartViewScreen() {
      const [items, setItems] = useState<CartItem[]>([]);
 
      const [products, setProducts] = useState<IProduct[]>([]);
+     const [categories, setCategories] = useState<ICategory[]>([]);
      const sheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
      const editBsRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
@@ -101,10 +105,21 @@ export default function CartViewScreen() {
           }
      }, []);
 
+     const fetchCategories = useCallback(async () => {
+          try {
+               const data = await categoryRepository.findAll();
+               console.log('================= CATEGORIAS =================', data);
+               setCategories(data || []);
+          } catch {
+               // Ignore
+          }
+     }, []);
+
      useEffect(() => {
           fetchList();
           fetchProducts();
-     }, [fetchList]);
+          fetchCategories();
+     }, [fetchList, fetchProducts, fetchCategories]);
 
      const onRefresh = () => {
           setRefreshing(true);
@@ -114,15 +129,50 @@ export default function CartViewScreen() {
      const groupedItems = useMemo((): GroupedItems[] => {
           const groups: Record<string, CartItem[]> = {};
           items.forEach((item) => {
-               const cat = (item as unknown as { category?: string }).category || 'General';
-               if (!groups[cat]) groups[cat] = [];
-               groups[cat].push(item);
+               let catName = '';
+               if (item.category) {
+                    const catObj = item.category as unknown as IItemProduct;
+
+                    console.log('item', item);
+                    console.log('item.category', item.category);
+
+                    if (typeof catObj === 'object' && catObj !== null) {
+                         console.log('catObj=======>', catObj);
+                         if (catObj.name) {
+                              catName = catObj.name;
+                         } else if (catObj._id) {
+                              const foundCat = categories.find((c) => c._id === catObj._id);
+                              catName = foundCat?.name || 'General';
+                         } else {
+                              catName = 'General';
+                         }
+                    } else {
+                         const foundCat = categories.find((c) => c._id === catObj || c.name === catObj);
+                         catName = foundCat?.name || String(catObj);
+                    }
+
+                    if (!catName || catName === 'undefined' || catName === '[object Object]') {
+                         catName = 'General';
+                    }
+               }
+
+               // Log property value for debugging
+               console.log(`[Categorization] Item: "${item.name}" | raw category:`, item.category, `-> resolved catName:`, catName);
+
+               if (!groups[catName]) groups[catName] = [];
+               groups[catName].push(item);
           });
-          return Object.entries(groups).map(([category, data]) => ({
-               category,
-               data,
-          }));
-     }, [items]);
+          return Object.entries(groups)
+               .sort(([catA], [catB]) => {
+                    if (catA === 'General') return 1;
+                    if (catB === 'General') return -1;
+                    return catA.localeCompare(catB);
+               })
+               .map(([category, data]) => ({
+                    category,
+                    data,
+               }));
+     }, [items, categories]);
 
      const toggle = (itemId: string) => {
           setItems((prev) =>
@@ -142,6 +192,32 @@ export default function CartViewScreen() {
           );
      };
 
+     const handleDeleteItem = async (item: CartItem) => {
+          if (!list?._id || !item._id) return;
+          Alert.alert(
+               'Eliminar producto',
+               `¿Estás seguro de eliminar "${item.name}" de la lista?`,
+               [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                         text: 'Eliminar',
+                         style: 'destructive',
+                         onPress: async () => {
+                              if (!list._id || !item._id) return;
+                              try {
+                                   await shoppingListRepository.deleteItem(list._id, item._id);
+                                   console.log('Producto eliminado', item);
+                                   showToast.success('Éxito', 'Producto eliminado');
+                                   fetchList();
+                              } catch {
+                                   showToast.error('Error', 'No se pudo eliminar el producto');
+                              }
+                         },
+                    },
+               ]
+          );
+     };
+
      const addProductToList = async (product: IProduct) => {
           if (!list?._id || !user?._id) return;
           try {
@@ -152,7 +228,9 @@ export default function CartViewScreen() {
                     price: product.defaultPrice || 0,
                     isCompleted: false,
                     memberId: user._id,
+                    category: product.category || 'General',
                });
+               console.log('product.category', product.category);
                showToast.success('Éxito', 'Producto agregado');
                sheetRef.current?.close();
                fetchList();
@@ -263,7 +341,7 @@ export default function CartViewScreen() {
                                              <View key={group.category} style={style.categorySection}>
                                                   <Text style={[style.categoryLabel, { color: Colors.secondaryTextColor }]}>{group.category.toUpperCase()}</Text>
                                                   {group.data.map((item) => (
-                                                       <View key={item._id} style={style.itemWrapper}>
+                                                       <TouchableOpacity key={item._id} style={style.itemWrapper} onLongPress={() => handleDeleteItem(item)} activeOpacity={0.9}>
                                                             <View style={style.itemRow}>
                                                                  <TouchableOpacity
                                                                       style={[
@@ -303,7 +381,7 @@ export default function CartViewScreen() {
                                                                       </TouchableOpacity>
                                                                  </View>
                                                             </View>
-                                                       </View>
+                                                       </TouchableOpacity>
                                                   ))}
                                              </View>
                                         ))
