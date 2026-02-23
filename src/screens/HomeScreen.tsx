@@ -1,5 +1,5 @@
-﻿import { Image } from "expo-image";
-import { useCallback, useEffect, useState } from 'react';
+import { Image } from "expo-image";
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
      Dimensions,
      FlatList,
@@ -12,9 +12,9 @@ import {
      View
 } from 'react-native';
 
-import AnimatedDrawer from '@/components/AnimatedDrawer';
 import CustomInput from "@/components/CustomInput";
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
+import SettingsBottomSheet from '@/components/SettingsBottomSheet';
 import { Text } from '@/components/Themed';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { ICategory } from '@/interfaces/category.interface';
@@ -60,19 +60,19 @@ export default function HomeScreen() {
      const [isLoading, setIsLoading] = useState(true);
      const [refreshing, setRefreshing] = useState(false);
      const [search, setSearch] = useState('');
-     const [drawerVisible, setDrawerVisible] = useState(false);
+     const bottomSheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
      const fetchAll = useCallback(async () => {
           if (!user?._id) return;
           try {
-               const [l, c, p] = await Promise.all([
+               const [list, category, product] = await Promise.all([
                     shoppingListRepository.getByUser(user._id),
                     categoryRepository.findAll().catch(() => [] as ICategory[]),
                     productRepository.findAll().catch(() => [] as IProduct[]),
                ]);
-               setLists(l);
-               setCategories(c.slice(0, 8));
-               setProducts(p.slice(0, 6));
+               setLists(list);
+               setCategories(category.slice(0, 8));
+               setProducts(product.slice(0, 6));
           } catch {
                showToast.error('Error', 'No se pudieron cargar los datos');
           } finally {
@@ -150,7 +150,7 @@ export default function HomeScreen() {
           </Pressable>
      );
 
-     // ─── loading ───────────────────────────────────────────────────────────────
+     // --- loading ---------------------------------------------------------------
      if (isLoading) {
           return (
                <View style={[styles.root, { backgroundColor: Colors.screenBackgroundColor }]}>
@@ -164,12 +164,12 @@ export default function HomeScreen() {
           );
      }
 
-     // ─── render ────────────────────────────────────────────────────────────────
+     // --- render ----------------------------------------------------------------
      return (
           <View style={[styles.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
-               {/* ── Sticky Header ── */}
+               {/* -- Sticky Header -- */}
                <View style={styles.header}>
                     <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
                     <View style={[styles.headerRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
@@ -182,11 +182,11 @@ export default function HomeScreen() {
                               <Text style={[styles.hTitle, { color: Colors.primaryTextColor }]}>Lista de Compras</Text>
                          </View>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                              <Pressable onPress={() => setDrawerVisible(true)} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                              <Pressable onPress={() => { }} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
                                    <Feather name="bell" size={24} color={Colors.primaryTextColor} />
                               </Pressable>
-                              <Pressable onPress={() => setDrawerVisible(true)} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
-                                   <Feather name="menu" size={24} color={Colors.primaryTextColor} />
+                              <Pressable onPress={() => bottomSheetRef.current?.open()} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                                   <Feather name="settings" size={24} color={Colors.primaryTextColor} />
                               </Pressable>
                          </View>
                     </View>
@@ -248,7 +248,7 @@ export default function HomeScreen() {
                     {categories.length > 0 && (
                          <View style={styles.section}>
                               <View style={styles.secHead}>
-                                   <Text style={[styles.secTitle, { color: Colors.sectionLabelTextColor }]}>Categorias recientes</Text>
+                                   <Text style={[styles.secTitle, { color: Colors.sectionLabelTextColor }]}>Categorías recientes</Text>
                                    <Pressable onPress={() => router.push('/(tabs)/categories' as never)}>
                                         <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                                    </Pressable>
@@ -284,8 +284,8 @@ export default function HomeScreen() {
                {/* ── Custom Tab Bar ── */}
                <CustomTabBar activeRoute="/(tabs)" />
 
-               {/* ── Animated Drawer ── */}
-               <AnimatedDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
+               {/* -- Settings Bottom Sheet -- */}
+               <SettingsBottomSheet bottomSheetRef={bottomSheetRef} />
           </View>
      );
 }

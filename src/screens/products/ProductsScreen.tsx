@@ -634,7 +634,8 @@ const styles = StyleSheet.create({
 		width: '100%'
 	},
 	bottomSheetHandle: {
-		height: 3, width: 80,
+		height: 3,
+		width: 80,
 		borderRadius: 10,
 		alignSelf: 'center',
 		position: 'absolute',

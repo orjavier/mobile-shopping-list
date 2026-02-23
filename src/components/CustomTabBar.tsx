@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CustomTabBar — shared component used by all tab screens.
  *
  * Tabs order (left-to-right): Home | Shopping List | [FAB] | Categorías | Productos
@@ -6,7 +6,7 @@
  */
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePathname, useRouter } from 'expo-router';
 import { Dimensions, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -47,6 +47,14 @@ const TABS_L: Tab[] = [
 const TABS_R: Tab[] = [
      { icon: 'folder', label: 'Categorías', route: '/(tabs)/categories' },
      { icon: 'archive', label: 'Productos', route: '/(tabs)/products' },
+];
+
+const TABS_HOME: Tab[] = [
+     { icon: 'home', label: 'Home', route: '/(tabs)' },
+     { icon: 'list', label: 'Shopping List', route: '/(tabs)/lists' },
+     { icon: 'folder', label: 'Categorías', route: '/(tabs)/categories' },
+     { icon: 'archive', label: 'Productos', route: '/(tabs)/products' },
+     { icon: 'user', label: 'Perfil', route: '/(tabs)/profile' },
 ];
 
 // ─── theme tokens ─────────────────────────────────────────────────────────────
@@ -93,52 +101,40 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                     size={22}
                     color={isActive(tab.route) ? C.tabActive : C.tabText}
                />
-               {/* <Text style={[
-                    tb.tabLabel,
-                    { color: isActive(tab.route) ? C.tabActive : C.tabText },
-                    isActive(tab.route) && tb.tabLabelActive,
-               ]}>
-                    {tab.label}
-               </Text> */}
           </Pressable>
      );
 
      return (
-          <View style={tb.root} pointerEvents="box-none">
-               {/* ── orange bar ── */}
-               <View style={[tb.bar, { shadowColor: '#000' }, {
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.1)',
-                    backgroundColor: isDark ? 'rgba(15, 15, 15, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-               }]}>
-                    <View style={tb.half}>{TABS_L.map(renderTab)}</View>
-                    <View style={tb.centerGap} />
-                    <View style={tb.half}>{TABS_R.map(renderTab)}</View>
+          <BlurView
+               intensity={100}
+               tint={isDark ? 'dark' : 'light'}
+               style={tb.root}
+               pointerEvents="box-none"
+          >
+               {/* -- tab bar -- */}
+               <View style={tb.bar}>
+                    {isHome ? (
+                         <View style={tb.fullRow}>{TABS_HOME.map(renderTab)}</View>
+                    ) : (
+                         <>
+                              <View style={tb.half}>{TABS_L.map(renderTab)}</View>
+                              <View style={tb.centerGap} />
+                              <View style={tb.half}>{TABS_R.map(renderTab)}</View>
+                         </>
+                    )}
                </View>
 
-               {/* ── FAB (floats above the bar center) ── */}
-               <View style={tb.fabWrap}>
-                    <View style={[tb.fabOuter, {
-                         backgroundColor: C.fabCenter,
-                         borderColor: 'transparent',
-                         shadowColor: isDark ? '#ffffffff' : '#000',
-                         shadowOffset: { width: 0, height: 2 },
-                         shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5
-                    }]}>
-                         <Pressable style={tb.fabTouch} onPress={handleFab}>
-                              {isHome ? (
-                                   <LinearGradient
-                                        colors={['#FF8C5A', PRIMARY]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 1 }}
-                                        style={tb.fabGrad}
-                                   >
-                                        <Image
-                                             source={require('../assets/SVGs/simple-white-logo.svg')}
-                                             style={{ width: 32, height: 32 }}
-                                        />
-                                   </LinearGradient>
-                              ) : (
+               {/* ── FAB (only outside home) ── */}
+               {!isHome && (
+                    <View style={tb.fabWrap}>
+                         <View style={[tb.fabOuter, {
+                              backgroundColor: C.fabCenter,
+                              borderColor: 'transparent',
+                              shadowColor: isDark ? '#ffffff' : '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5
+                         }]}>
+                              <Pressable style={tb.fabTouch} onPress={handleFab}>
                                    <LinearGradient
                                         colors={['#FF8C5A', PRIMARY]}
                                         start={{ x: 0, y: 0 }}
@@ -147,11 +143,11 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                                    >
                                         <Feather name="plus" size={26} color="#fff" />
                                    </LinearGradient>
-                              )}
-                         </Pressable>
+                              </Pressable>
+                         </View>
                     </View>
-               </View>
-          </View>
+               )}
+          </BlurView>
      );
 }
 
@@ -161,24 +157,25 @@ const tb = StyleSheet.create({
           bottom: 0,
           left: 0,
           right: 0,
-          alignItems: 'center',
           zIndex: 50,
      } as object,
      bar: {
-          width: WIDTH - 20,
+          width: WIDTH,
           height: TAB_H,
-          borderTopLeftRadius: 50,
-          borderTopRightRadius: 50,
-          borderBottomLeftRadius: 50,
-          borderBottomRightRadius: 50,
-          marginBottom: 10,
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 8,
           paddingBottom: TAB_BOTTOM_EXTRA,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(150, 150, 150, 0.2)',
      },
      half: {
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+     },
+     fullRow: {
           flex: 1,
           flexDirection: 'row',
           justifyContent: 'space-around',
