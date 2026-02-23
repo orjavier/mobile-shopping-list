@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ShoppingListOverView — Shopping Lists from backend
  */
 
@@ -9,58 +9,24 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
+import CustomInput from '@/components/CustomInput';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
-import RBSheet from 'react-native-raw-bottom-sheet';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
-
+import RBSheet from 'react-native-raw-bottom-sheet';
 // ─── tokens ───────────────────────────────────────────────────────────────────
-const LIGHT = {
-  bg: '#F9FAFB',
-  headerBg: '#FFFFFF',
-  searchBg: '#FFFFFF',
-  text: '#0F172A',
-  textMuted: '#64748B',
-  textSub: '#94A3B8',
-  sectionLabel: '#94A3B8',
-  card: '#FFFFFF',
-  cardBorder: 'rgba(0,0,0,0.04)',
-  chevron: '#CBD5E1',
-  btn: PRIMARY,
-  inputBg: '#FFFFFF',
-  inputBorder: '#E2E8F0',
-  inputText: '#0F172A',
-};
-const DARK = {
-  bg: '#121212',
-  headerBg: 'rgba(18,18,18,0.90)',
-  searchBg: '#1A1A1A',
-  text: '#F1F5F9',
-  textMuted: '#94A3B8',
-  textSub: '#64748B',
-  sectionLabel: '#52525B',
-  card: '#1C1C1E',
-  cardBorder: 'rgba(255,255,255,0.05)',
-  chevron: '#3F3F46',
-  btn: PRIMARY,
-  inputBg: '#252525',
-  inputBorder: 'rgba(255,255,255,0.08)',
-  inputText: '#F1F5F9',
-};
-
 const PALETTES = [
   { bg: '#FFF3E0', icon: 'shopping-basket', iconColor: PRIMARY },
   { bg: '#FFF9C4', icon: 'search', iconColor: '#D97706' },
@@ -88,8 +54,7 @@ function paletteFor(idx: number, isDark: boolean) {
 // ─── SCREEN ───────────────────────────────────────────────────────────────────
 export default function ShoppingListOverView() {
   const router = useRouter();
-  const isDark = useColorScheme() === 'dark';
-  const C = isDark ? DARK : LIGHT;
+  const { colors: Colors, isDark } = useAppTheme();
   const user = useAuthStore((s) => s.user);
 
   const [lists, setLists] = useState<IShoppingList[]>([]);
@@ -168,7 +133,7 @@ export default function ShoppingListOverView() {
       <TouchableOpacity
         key={item._id}
         activeOpacity={0.72}
-        style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder }]}
+        style={[s.row, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.borderColor }]}
         onPress={() => item._id && router.push(`/list/${item._id}`)}
         onLongPress={() => handleDelete(item)}
       >
@@ -176,18 +141,18 @@ export default function ShoppingListOverView() {
           <MaterialIcons name={pal.icon as never} size={22} color={pal.iconColor} />
         </View>
         <View style={s.rowBody}>
-          <Text style={[s.rowName, { color: C.text }]}>{item.name}</Text>
-          <Text style={[s.rowSub, { color: C.textMuted }]}>
+          <Text style={[s.rowName, { color: Colors.primaryTextColor }]}>{item.name}</Text>
+          <Text style={[s.rowSub, { color: Colors.secondaryTextColor }]}>
             {count} producto{count !== 1 ? 's' : ''}
           </Text>
         </View>
-        <MaterialIcons name="chevron-right" size={22} color={C.chevron} />
+        <MaterialIcons name="chevron-right" size={22} color={Colors.chevronColor} />
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={[s.root, { backgroundColor: C.bg }]}>
+    <View style={[s.root, { backgroundColor: Colors.screenBackgroundColor }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         translucent
@@ -198,8 +163,8 @@ export default function ShoppingListOverView() {
         style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28 }}
       />
 
-      <View style={[s.header, { backgroundColor: C.headerBg }]}>
-        <Text style={[s.headerTitle, { color: C.text }]}>Lista de Compras</Text>
+      <View style={[s.header]}>
+        <Text style={[s.headerTitle, { color: Colors.primaryTextColor }]}>Lista de Compras</Text>
       </View>
 
       <ScrollView
@@ -215,38 +180,33 @@ export default function ShoppingListOverView() {
         }
       >
         {/* Search Bar */}
-        <View style={[s.searchBar, { backgroundColor: C.searchBg }]}>
-          <MaterialIcons name="search" size={20} color={C.textSub} />
-          <TextInput
-            style={[s.searchInput, { color: C.inputText }]}
-            placeholder="Buscar listas..."
-            placeholderTextColor={C.textSub}
+        <View style={{ marginTop: 8, marginBottom: 12 }}>
+          <CustomInput
+            leftIcon="search"
             value={search}
             onChangeText={setSearch}
+            placeholder="Buscar listas..."
+            rightIcon={search.length > 0 ? "x" : undefined}
+            onRightIconPress={() => setSearch('')}
           />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <MaterialIcons name="close" size={17} color={C.textMuted} />
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Recently created */}
-        <Text style={[s.sectionLabel, { color: C.sectionLabel, marginTop: 20 }]}>
+        <Text style={[s.sectionLabel, { color: Colors.sectionLabelTextColor, marginTop: 20 }]}>
           CREADO RECIENTEMENTE
         </Text>
 
         {loading ? (
-          <View style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder, justifyContent: 'center' }]}>
-            <Text style={[s.rowSub, { color: C.textMuted }]}>Cargando...</Text>
+          <View style={[s.row, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.borderColor, justifyContent: 'center' }]}>
+            <Text style={[s.rowSub, { color: Colors.secondaryTextColor }]}>Cargando...</Text>
           </View>
         ) : filteredLists.length === 0 ? (
           <View style={s.emptyWrap}>
             <View style={[s.emptyIcon, { backgroundColor: `${PRIMARY}18` }]}>
               <MaterialIcons name="add-shopping-cart" size={36} color={PRIMARY} />
             </View>
-            <Text style={[s.emptyTitle, { color: C.text }]}>Sin listas aún</Text>
-            <Text style={[s.emptySub, { color: C.textMuted }]}>
+            <Text style={[s.emptyTitle, { color: Colors.primaryTextColor }]}>Sin listas aún</Text>
+            <Text style={[s.emptySub, { color: Colors.secondaryTextColor }]}>
               Toca el botón + para crear tu primera lista
             </Text>
           </View>
@@ -260,27 +220,34 @@ export default function ShoppingListOverView() {
         ref={bsRef}
         height={350}
         draggable
+        customStyles={{
+          wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+          container: {
+            backgroundColor: Colors.surfaceBackgroundColor,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          },
+          draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+        }}
       >
         <View style={s.sheetContent}>
           <View style={s.sheetHeader}>
-            <Text style={[s.sheetTitle, { color: C.text }]}>Nueva Lista</Text>
+            <Text style={[s.sheetTitle, { color: Colors.primaryTextColor }]}>Nueva Lista</Text>
             <TouchableOpacity
-              style={[s.sheetClose, { backgroundColor: C.inputBg }]}
+              style={[s.sheetClose, { backgroundColor: Colors.inputBackgroundColor }]}
               onPress={() => bsRef.current?.close()}
             >
-              <MaterialIcons name="close" size={18} color={C.textMuted} />
+              <MaterialIcons name="close" size={18} color={Colors.secondaryTextColor} />
             </TouchableOpacity>
           </View>
 
-          <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
-          <View style={[s.inputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-            <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
-            <TextInput
-              style={[s.bsInput, { color: C.inputText }]}
+          <Text style={[s.inputLabel, { color: Colors.secondaryTextColor }]}>NOMBRE DE LA LISTA</Text>
+          <View style={{ marginBottom: 24 }}>
+            <CustomInput
+              leftIcon="shopping-cart"
               value={newName}
               onChangeText={setNewName}
               placeholder="Ej: Compras del supermercado"
-              placeholderTextColor={C.textSub}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
             />
@@ -314,16 +281,11 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 20,
     paddingBottom: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3 },
+  headerTitle: { fontSize: 20, letterSpacing: -0.3 },
 
   searchBar: {
     flexDirection: 'row',

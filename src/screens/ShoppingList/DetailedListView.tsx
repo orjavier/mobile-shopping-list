@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DetailedListView — boceto: dark_mode_detailed_list_view.html
  */
 
@@ -14,9 +14,8 @@ import {
 
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
-
+import { useAppTheme } from '@/hooks/useAppTheme';
 // ─── mock data ────────────────────────────────────────────────────────────────
 type Item = { id: string; name: string; qty: string; done: boolean };
 type Section = { title: string; items: Item[] };
@@ -54,54 +53,22 @@ const COLLABORATORS = [
 ];
 
 // ─── tokens ───────────────────────────────────────────────────────────────────
-const LIGHT = {
-     bg: '#F9FAFB',
-     headerBg: '#FFFFFF',
-     text: '#0F172A',
-     textMuted: '#94A3B8',
-     textSub: '#64748B',
-     sectionLabel: '#94A3B8',
-     checkBorder: '#CBD5E1',
-     doneTxt: '#CBD5E1',
-     backBtn: '#F1F5F9',
-     backIcon: '#374151',
-     actionBar: 'rgba(255,255,255,0.94)',
-     actionBarBorder: '#E2E8F0',
-     divider: 'rgba(148,163,184,0.18)',
-};
-const DARK = {
-     bg: '#000000',
-     headerBg: '#000000',
-     text: '#F1F5F9',
-     textMuted: '#71717A',
-     textSub: '#52525B',
-     sectionLabel: '#3F3F46',
-     checkBorder: '#3F3F46',
-     doneTxt: '#3F3F46',
-     backBtn: 'rgba(255,255,255,0.08)',
-     backIcon: '#D1D5DB',
-     actionBar: 'rgba(18,18,18,0.96)',
-     actionBarBorder: '#27272A',
-     divider: 'rgba(255,255,255,0.06)',
-};
-
 // ─── SCREEN ───────────────────────────────────────────────────────────────────
 export default function DetailedListView() {
-     const isDark = useColorScheme() === 'dark';
-     const C = isDark ? DARK : LIGHT;
+     const { colors: Colors, isDark } = useAppTheme();
 
      return (
-          <View style={[s.root, { backgroundColor: C.bg }]}>
+          <View style={[s.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
                {/* status bar spacer */}
-               <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28), backgroundColor: C.headerBg }} />
+               <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28), backgroundColor: Colors.headerBackgroundColor }} />
 
                {/* ── header row: back | spacer | collaborators ── */}
-               <View style={[s.header, { backgroundColor: C.headerBg }]}>
+               <View style={[s.header, { backgroundColor: Colors.headerBackgroundColor }]}>
                     {/* back button */}
-                    <TouchableOpacity style={[s.backBtn, { backgroundColor: C.backBtn }]} activeOpacity={0.75}>
-                         <MaterialIcons name="arrow-back" size={22} color={C.backIcon} />
+                    <TouchableOpacity style={[s.backBtn, { backgroundColor: Colors.backButtonBackgroundColor }]} activeOpacity={0.75}>
+                         <MaterialIcons name="arrow-back" size={22} color={Colors.backButtonIconColor} />
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }} />
@@ -130,8 +97,8 @@ export default function DetailedListView() {
                </View>
 
                {/* ── title ── */}
-               <View style={[s.titleWrap, { backgroundColor: C.headerBg }]}>
-                    <Text style={[s.title, { color: C.text }]}>Morning breakfast</Text>
+               <View style={[s.titleWrap, { backgroundColor: Colors.headerBackgroundColor }]}>
+                    <Text style={[s.title, { color: Colors.primaryTextColor }]}>Morning breakfast</Text>
                </View>
 
                {/* ── items scroll ── */}
@@ -142,7 +109,7 @@ export default function DetailedListView() {
                     {SECTIONS.map((section) => (
                          <View key={section.title} style={s.section}>
                               {/* section label */}
-                              <Text style={[s.sectionLabel, { color: C.sectionLabel }]}>
+                              <Text style={[s.sectionLabel, { color: Colors.sectionLabelTextColor }]}>
                                    {section.title.toUpperCase()}
                               </Text>
 
@@ -153,7 +120,7 @@ export default function DetailedListView() {
                                              key={item.id}
                                              style={[
                                                   s.itemRow,
-                                                  { borderBottomColor: C.divider },
+                                                  { borderBottomColor: Colors.dividerColor },
                                                   idx === section.items.length - 1 && { borderBottomWidth: 0 },
                                                   item.done && s.itemRowDone,
                                              ]}
@@ -163,7 +130,7 @@ export default function DetailedListView() {
                                                   s.check,
                                                   item.done
                                                        ? { backgroundColor: PRIMARY, borderColor: PRIMARY }
-                                                       : { backgroundColor: 'transparent', borderColor: C.checkBorder },
+                                                       : { backgroundColor: 'transparent', borderColor: Colors.checkboxBorderColor },
                                              ]}>
                                                   {item.done && <MaterialIcons name="check" size={13} color="#fff" />}
                                              </View>
@@ -171,14 +138,14 @@ export default function DetailedListView() {
                                              {/* name */}
                                              <Text style={[
                                                   s.itemName,
-                                                  { color: item.done ? C.doneTxt : C.text },
+                                                  { color: item.done ? Colors.completedItemTextColor : Colors.primaryTextColor },
                                                   item.done && { textDecorationLine: 'line-through' },
                                              ]}>
                                                   {item.name}
                                              </Text>
 
                                              {/* qty */}
-                                             <Text style={[s.itemQty, { color: C.textMuted }]}>{item.qty}</Text>
+                                             <Text style={[s.itemQty, { color: Colors.secondaryTextColor }]}>{item.qty}</Text>
                                         </View>
                                    ))}
                               </View>
@@ -187,9 +154,9 @@ export default function DetailedListView() {
                </ScrollView>
 
                {/* ── action bar (mic | FAB+ | qr) ── */}
-               <View style={[s.actionBar, { backgroundColor: C.actionBar, borderTopColor: C.actionBarBorder }]}>
+               <View style={[s.actionBar, { backgroundColor: Colors.actionBarBackgroundColor, borderTopColor: Colors.actionBarBorderColor }]}>
                     <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
-                         <MaterialIcons name="mic" size={26} color={C.textMuted} />
+                         <MaterialIcons name="mic" size={26} color={Colors.secondaryTextColor} />
                     </TouchableOpacity>
 
                     {/* floating FAB */}
@@ -198,7 +165,7 @@ export default function DetailedListView() {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
-                         <MaterialIcons name="qr-code-scanner" size={26} color={C.textMuted} />
+                         <MaterialIcons name="qr-code-scanner" size={26} color={Colors.secondaryTextColor} />
                     </TouchableOpacity>
                </View>
 

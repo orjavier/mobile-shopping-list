@@ -11,7 +11,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { usePathname, useRouter } from 'expo-router';
 import { Dimensions, Platform, Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/Themed';
 import { Feather } from '@expo/vector-icons';
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -22,7 +21,7 @@ export const TAB_TOTAL = TAB_H + TAB_BOTTOM_EXTRA;
 
 const FAB_D = 62;
 const FAB_OUTER_D = 76;
-const { width: W } = Dimensions.get('window');
+const { width: WIDTH } = Dimensions.get('window');
 
 // ─── route map ────────────────────────────────────────────────────────────────
 export type TabRoute =
@@ -53,12 +52,12 @@ const TABS_R: Tab[] = [
 // ─── theme tokens ─────────────────────────────────────────────────────────────
 const LIGHT_TB = {
      tabText: 'rgba(49, 49, 49, 0.72)',
-     tabActive: PRIMARY,
+     tabActive: '#FF6C37',
      fabCenter: '#FFFFFF',
 };
 const DARK_TB = {
      tabText: 'rgba(255,255,255,0.65)',
-     tabActive: '#FFFFFF',
+     tabActive: '#FF6C37',
      fabCenter: '#0F0F0F',
 };
 
@@ -94,13 +93,13 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                     size={22}
                     color={isActive(tab.route) ? C.tabActive : C.tabText}
                />
-               <Text style={[
+               {/* <Text style={[
                     tb.tabLabel,
                     { color: isActive(tab.route) ? C.tabActive : C.tabText },
                     isActive(tab.route) && tb.tabLabelActive,
                ]}>
                     {tab.label}
-               </Text>
+               </Text> */}
           </Pressable>
      );
 
@@ -156,7 +155,6 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
      );
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 const tb = StyleSheet.create({
      root: {
           position: 'absolute',
@@ -167,9 +165,8 @@ const tb = StyleSheet.create({
           zIndex: 50,
      } as object,
      bar: {
-          width: W - 20,
+          width: WIDTH - 20,
           height: TAB_H,
-          //backgroundColor: '#fff',
           borderTopLeftRadius: 50,
           borderTopRightRadius: 50,
           borderBottomLeftRadius: 50,

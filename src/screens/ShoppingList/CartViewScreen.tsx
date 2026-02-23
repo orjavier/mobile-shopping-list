@@ -1,3 +1,4 @@
+﻿import { PRIMARY_COLOR as PRIMARY, useAppTheme } from '@/hooks/useAppTheme';
 /**
  * CartViewScreen — Checkout view with products grouped by category
  */
@@ -11,16 +12,14 @@ import {
      ScrollView,
      StatusBar,
      StyleSheet,
-     TextInput,
      TouchableOpacity,
      useWindowDimensions,
-     View,
+     View
 } from 'react-native';
 
 import CustomButton from '@/components/CustomButton';
-import RBSheet from 'react-native-raw-bottom-sheet';
+import CustomInput from '@/components/CustomInput';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
 import { IItemProduct } from '@/interfaces/item-product.interface';
 import { IProduct } from '@/interfaces/product.interface';
 import { IShoppingList, IShoppingListUpdate } from '@/interfaces/shopping-list.interface';
@@ -28,47 +27,10 @@ import { productRepository } from '@/repositories/product.repository';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
+import { Feather } from '@expo/vector-icons';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-
-const PRIMARY = '#FF6C37';
-
-const LIGHT = {
-     bg: '#F9FAFB',
-     headerBg: '#FFFFFF',
-     surface: '#FFFFFF',
-     border: '#E2E8F0',
-     text: '#0F172A',
-     textMuted: '#64748B',
-     textFaint: '#94A3B8',
-     imgBg: '#FFFFFF',
-     inputBg: '#FFFFFF',
-     inputBorder: '#E2E8F0',
-     inputText: '#0F172A',
-     footerBg: '#FFFFFF',
-     footerBorder: '#F1F5F9',
-     actionBar: '#FFFFFF',
-     actionBarBorder: '#E2E8F0',
-};
-
-const DARK = {
-     bg: '#121212',
-     headerBg: '#121212',
-     surface: '#1E1E1E',
-     border: '#2D2D2D',
-     text: '#F1F5F9',
-     textMuted: '#94A3B8',
-     textFaint: '#52525B',
-     imgBg: '#1E1E1E',
-     inputBg: '#252525',
-     inputBorder: 'rgba(255,255,255,0.08)',
-     inputText: '#F1F5F9',
-     footerBg: '#121212',
-     footerBorder: '#1F1F23',
-     actionBar: '#1E1E1E',
-     actionBarBorder: '#2D2D2D',
-};
-
+import RBSheet from 'react-native-raw-bottom-sheet';
 interface CartItem extends IItemProduct {
      cartQty: number;
 }
@@ -82,8 +44,7 @@ export default function CartViewScreen() {
      const router = useRouter();
      const params = useLocalSearchParams<{ id: string }>();
      const id = params.id;
-     const isDark = useColorScheme() === 'dark';
-     const C = isDark ? DARK : LIGHT;
+     const { colors: Colors, isDark } = useAppTheme();
      const user = useAuthStore((s) => s.user);
 
      const [list, setList] = useState<IShoppingList | null>(null);
@@ -91,7 +52,7 @@ export default function CartViewScreen() {
      const [refreshing, setRefreshing] = useState(false);
      const [items, setItems] = useState<CartItem[]>([]);
 
-const [products, setProducts] = useState<IProduct[]>([]);
+     const [products, setProducts] = useState<IProduct[]>([]);
      const sheetRef = useRef<{ open: () => void; close: () => void } | null>(null);
      const editBsRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
@@ -234,27 +195,27 @@ const [products, setProducts] = useState<IProduct[]>([]);
           p.name.toLowerCase().includes(searchProduct.toLowerCase())
      );
 
-const total = items.reduce((sum, item) => {
-           const price = item.price || 0;
-           return sum + price * (item.cartQty || 1);
-      }, 0);
+     const total = items.reduce((sum, item) => {
+          const price = item.price || 0;
+          return sum + price * (item.cartQty || 1);
+     }, 0);
 
-      const renderProductItem = ({ item }: { item: IProduct }) => (
+     const renderProductItem = ({ item }: { item: IProduct }) => (
           <TouchableOpacity
-               style={[s.productItem, { borderColor: C.border }]}
+               style={[style.productItem, { borderColor: Colors.borderColor }]}
                onPress={() => addProductToList(item)}
                activeOpacity={0.7}
           >
-               <View style={[s.productImg, { backgroundColor: C.imgBg }]}>
+               <View style={[style.productImg, { backgroundColor: Colors.productImageBackgroundColor }]}>
                     {item.secure_url ? (
-                         <Image source={{ uri: item.secure_url }} style={s.productImgInner} />
+                         <Image source={{ uri: item.secure_url }} style={style.productImgInner} />
                     ) : (
-                         <MaterialIcons name="shopping-bag" size={24} color={C.textMuted} />
+                         <MaterialIcons name="shopping-bag" size={24} color={Colors.secondaryTextColor} />
                     )}
                </View>
-               <View style={s.productInfo}>
-                    <Text style={[s.productName, { color: C.text }]}>{item.name}</Text>
-                    <Text style={[s.productDetail, { color: C.textMuted }]}>
+               <View style={style.productInfo}>
+                    <Text style={[style.productName, { color: Colors.primaryTextColor }]}>{item.name}</Text>
+                    <Text style={[style.productDetail, { color: Colors.secondaryTextColor }]}>
                          {item.defaultQuantity} {item.defaultUnit} {item.defaultPrice ? `• $${item.defaultPrice}` : ''}
                     </Text>
                </View>
@@ -263,244 +224,258 @@ const total = items.reduce((sum, item) => {
      );
 
      return (
-          <View style={[s.root, { backgroundColor: C.bg }]}>
+          <View style={[style.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
-               <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28, backgroundColor: C.headerBg }} />
+               <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28, backgroundColor: Colors.headerBackgroundColor }} />
 
-               <View style={[s.header, { backgroundColor: C.headerBg }]}>
-                    <TouchableOpacity onPress={() => router.back()} style={[s.backBtn, { backgroundColor: isDark ? '#2D2D2D' : '#F1F5F9' }]}>
-                         <MaterialIcons name="arrow-back" size={20} color={C.text} />
+               <View style={[style.header]}>
+                    <TouchableOpacity onPress={() => router.back()} style={[style.backBtn]}>
+                         <Feather name="chevron-left" size={24} color={Colors.primaryTextColor} />
                     </TouchableOpacity>
-                    <Text style={[s.headerTitle, { color: C.text }]}>{list?.name || 'Carrito'} </Text>
-                    <TouchableOpacity onPress={openEditSheet} style={[s.backBtn, { backgroundColor: isDark ? '#2D2D2D' : '#F1F5F9' }]}>
-                         <MaterialIcons name="settings" size={20} color={C.text} />
+                    <Text style={[style.headerTitle, { color: Colors.primaryTextColor }]}>{list?.name || 'Carrito'} </Text>
+                    <TouchableOpacity onPress={openEditSheet} style={[style.backBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                         <Feather name="settings" size={20} color={Colors.primaryTextColor} />
                     </TouchableOpacity>
                </View>
 
-               {loading ? (
-                    <View style={s.loading}>
-                         <MaterialIcons name="shopping-cart" size={36} color={PRIMARY} />
-                         <Text style={[s.loadingTxt, { color: C.textMuted }]}>Cargando...</Text>
-                    </View>
-               ) : (
-                    <>
-                         <ScrollView
-                              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 180 }}
-                              showsVerticalScrollIndicator={false}
-                              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />}
-                         >
-                              {items.length === 0 ? (
-                                   <View style={s.emptyWrap}>
-                                        <MaterialIcons name="shopping-cart" size={64} color={C.textFaint} />
-                                        <Text style={[s.emptyTitle, { color: C.text }]}>Carrito vacío</Text>
-                                        <Text style={[s.emptySub, { color: C.textMuted }]}>Toca el botón + para agregar productos</Text>
-                                   </View>
-                              ) : (
-                                   groupedItems.map((group) => (
-                                        <View key={group.category} style={s.categorySection}>
-                                             <Text style={[s.categoryLabel, { color: C.textMuted }]}>{group.category.toUpperCase()}</Text>
-                                             {group.data.map((item) => (
-                                                  <View key={item._id} style={s.itemWrapper}>
-                                                       <View style={s.itemRow}>
-                                                            <TouchableOpacity
-                                                                 style={[s.checkbox, { borderColor: item.isCompleted ? PRIMARY : C.border, backgroundColor: item.isCompleted ? PRIMARY : 'transparent' }]}
-                                                                 onPress={() => item._id && toggle(item._id)}
-                                                                 activeOpacity={0.7}
-                                                            >
-                                                                 {item.isCompleted && <MaterialIcons name="check" size={12} color="#fff" />}
-                                                            </TouchableOpacity>
-
-                                                            <View style={[s.imgBox, { backgroundColor: C.imgBg }]}>
-                                                                 {item.secure_url ? (
-                                                                      <Image source={{ uri: item.secure_url }} style={[s.img, item.isCompleted && { opacity: 0.4 }]} resizeMode="contain" />
-                                                                 ) : (
-                                                                      <MaterialIcons name="shopping-bag" size={24} color={C.textMuted} />
-                                                                 )}
-                                                            </View>
-
-                                                            <View style={[s.info, item.isCompleted && { opacity: 0.45 }]}>
-                                                                 <Text style={[s.price, { color: item.price ? PRIMARY : C.textMuted }]}>
-                                                                      {item.price ? `$${item.price.toFixed(2)}` : '—'}
-                                                                 </Text>
-                                                                 <Text style={[s.name, { color: C.text }, item.isCompleted && { textDecorationLine: 'line-through' }]} numberOfLines={2}>
-                                                                      {item.name}
-                                                                 </Text>
-                                                                 <Text style={[s.size, { color: C.textMuted }]}>{item.quantity} {item.unit}</Text>
-                                                            </View>
-
-                                                            <View style={[s.qtyActions, { borderColor: C.border }]}>
-                                                                 <TouchableOpacity onPress={() => item._id && changeQty(item._id, -1)} style={s.qtyBtn}>
-                                                                      <MaterialIcons name="remove" size={16} color={C.textMuted} />
+               {
+                    loading ? (
+                         <View style={style.loading}>
+                              <MaterialIcons name="shopping-cart" size={36} color={PRIMARY} />
+                              <Text style={[style.loadingTxt, { color: Colors.secondaryTextColor }]}>Cargando...</Text>
+                         </View>
+                    ) : (
+                         <>
+                              <ScrollView
+                                   contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 180 }}
+                                   showsVerticalScrollIndicator={false}
+                                   refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />}
+                              >
+                                   {items.length === 0 ? (
+                                        <View style={style.emptyWrap}>
+                                             <MaterialIcons name="shopping-cart" size={64} color={Colors.tertiaryTextColor} />
+                                             <Text style={[style.emptyTitle, { color: Colors.primaryTextColor }]}>Carrito vacío</Text>
+                                             <Text style={[style.emptySub, { color: Colors.secondaryTextColor }]}>Toca el botón + para agregar productos</Text>
+                                        </View>
+                                   ) : (
+                                        groupedItems.map((group) => (
+                                             <View key={group.category} style={style.categorySection}>
+                                                  <Text style={[style.categoryLabel, { color: Colors.secondaryTextColor }]}>{group.category.toUpperCase()}</Text>
+                                                  {group.data.map((item) => (
+                                                       <View key={item._id} style={style.itemWrapper}>
+                                                            <View style={style.itemRow}>
+                                                                 <TouchableOpacity
+                                                                      style={[
+                                                                           style.checkbox,
+                                                                           { borderColor: item.isCompleted ? 'transparent' : Colors.borderColor, backgroundColor: item.isCompleted ? PRIMARY : 'transparent' }
+                                                                      ]}
+                                                                      onPress={() => item._id && toggle(item._id)}
+                                                                      activeOpacity={0.7}
+                                                                 >
+                                                                      {item.isCompleted && <MaterialIcons name="check" size={16} color="#fff" />}
                                                                  </TouchableOpacity>
-                                                                 <Text style={[s.qtyVal, { color: C.text }]}>{item.cartQty || 1}</Text>
-                                                                 <TouchableOpacity onPress={() => item._id && changeQty(item._id, +1)} style={s.qtyBtn}>
-                                                                      <MaterialIcons name="add" size={16} color={PRIMARY} />
-                                                                 </TouchableOpacity>
+
+                                                                 <View style={[style.imgBox, { backgroundColor: Colors.productImageBackgroundColor }]}>
+                                                                      {item.secure_url ? (
+                                                                           <Image source={{ uri: item.secure_url }} style={[style.img, item.isCompleted && { opacity: 0.4 }]} resizeMode="contain" />
+                                                                      ) : (
+                                                                           <MaterialIcons name="shopping-bag" size={24} color={Colors.secondaryTextColor} />
+                                                                      )}
+                                                                 </View>
+
+                                                                 <View style={[style.info, item.isCompleted && { opacity: 0.45 }]}>
+                                                                      <Text style={[style.name, { color: Colors.primaryTextColor }, item.isCompleted && { textDecorationLine: 'line-through' }]} numberOfLines={2}>
+                                                                           {item.name}
+                                                                      </Text>
+                                                                      <Text style={[style.size, { color: Colors.secondaryTextColor }]}>
+                                                                           {item.quantity} {item.unit} • {(item.price || 0).toFixed(2).replace('.', ',')} €
+                                                                      </Text>
+                                                                 </View>
+
+                                                                 <View style={[style.qtyActions, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F5F7FA' }]}>
+                                                                      <TouchableOpacity onPress={() => item._id && changeQty(item._id, -1)} style={[style.qtyBtn, { backgroundColor: Colors.surfaceBackgroundColor, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 }]}>
+                                                                           <MaterialIcons name="remove" size={18} color={Colors.primaryTextColor} />
+                                                                      </TouchableOpacity>
+                                                                      <Text style={[style.qtyVal, { color: Colors.primaryTextColor }]}>{item.cartQty || 1}</Text>
+                                                                      <TouchableOpacity onPress={() => item._id && changeQty(item._id, +1)} style={[style.qtyBtn, { backgroundColor: PRIMARY, elevation: 4, shadowColor: PRIMARY, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 }]}>
+                                                                           <MaterialIcons name="add" size={18} color="#FFFFFF" />
+                                                                      </TouchableOpacity>
+                                                                 </View>
                                                             </View>
                                                        </View>
-                                                  </View>
-                                             ))}
-                                        </View>
-                                   ))
-                              )}
-                         </ScrollView>
-                         {/* ── action bar (mic | FAB+ | qr) ── */}
-                         <View style={[s.actionBar, { backgroundColor: C.actionBar, borderTopColor: C.actionBarBorder }]}>
-                              <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
-                                   <MaterialIcons name="mic" size={26} color={C.textMuted} />
-                              </TouchableOpacity>
-                              <TouchableOpacity style={s.fab} onPress={() => sheetRef.current?.open()} activeOpacity={0.8}>
-                                   <MaterialIcons name="add" size={28} color="#fff" />
-                              </TouchableOpacity>
+                                                  ))}
+                                             </View>
+                                        ))
+                                   )}
+                              </ScrollView>
+                              {/* ── action bar (mic | FAB+ | qr) ── */}
+                              <View style={[style.actionBar, { backgroundColor: Colors.actionBarBackgroundColor, borderTopColor: Colors.actionBarBorderColor }]}>
+                                   <TouchableOpacity style={style.actionBtn} activeOpacity={0.7}>
+                                        <MaterialIcons name="mic" size={26} color={Colors.secondaryTextColor} />
+                                   </TouchableOpacity>
+                                   <TouchableOpacity style={style.fab} onPress={() => sheetRef.current?.open()} activeOpacity={0.8}>
+                                        <MaterialIcons name="add" size={28} color="#fff" />
+                                   </TouchableOpacity>
 
-                              <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
-                                   <MaterialIcons name="qr-code-scanner" size={26} color={C.textMuted} />
-                              </TouchableOpacity>
-                         </View>
-
-
-
-                         <View style={[s.footer, { backgroundColor: C.footerBg, borderTopColor: C.footerBorder }]}>
-                              <View style={s.footerContent}>
-                                   <Text style={[s.footerLabel, { color: C.textMuted }]}>Total</Text>
-                                   <Text style={[s.footerTotal, { color: C.text }]}>${total.toFixed(2)}</Text>
+                                   <TouchableOpacity style={style.actionBtn} activeOpacity={0.7}>
+                                        <MaterialIcons name="qr-code-scanner" size={26} color={Colors.secondaryTextColor} />
+                                   </TouchableOpacity>
                               </View>
-                              <CustomButton
-                                   title="Finalizar"
-                                   variant="primary"
-                                   onPress={() => { }}
-                                   style={s.checkoutBtn}
-                              />
-                         </View>
-                    </>
-               )
+
+
+
+                              <View style={[style.footer, { borderTopColor: Colors.footerBorderColor }]}>
+                                   <View style={style.footerContent}>
+                                        <Text style={[style.footerLabel, { color: Colors.secondaryTextColor }]}>Total</Text>
+                                        <Text style={[style.footerTotal, { color: Colors.primaryTextColor }]}>{total.toFixed(2).replace('.', ',')} €</Text>
+                                   </View>
+                                   <CustomButton
+                                        title="Finalizar"
+                                        variant="primary"
+                                        onPress={() => { }}
+                                        style={style.checkoutBtn}
+                                   />
+                              </View>
+                         </>
+                    )
                }
 
-{/* ── RBSheet: Agregar productos ── */}
-                <RBSheet
-                     ref={sheetRef}
-                     height={productSheetHeight}
-                     draggable
-                >
-                     <View style={s.sheetContent}>
-                          <Text style={[s.sheetTitle, { color: C.text }]}>Agregar Productos</Text>
+               {/* ── RBSheet: Agregar productos ── */}
+               <RBSheet
+                    ref={sheetRef}
+                    height={productSheetHeight}
+                    draggable
+                    customStyles={{
+                         wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+                         container: {
+                              backgroundColor: Colors.surfaceBackgroundColor,
+                              borderTopLeftRadius: 24,
+                              borderTopRightRadius: 24,
+                         },
+                         draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+                    }}
+               >
+                    <View style={style.sheetContent}>
+                         <Text style={[style.sheetTitle, { color: Colors.primaryTextColor }]}>Agregar Productos</Text>
 
-                          <View style={[s.searchBar, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                               <MaterialIcons name="search" size={20} color={C.textMuted} />
-                               <TextInput
-                                    style={[s.searchInput, { color: C.inputText }]}
-                                    placeholder="Buscar productos..."
-                                    placeholderTextColor={C.textMuted}
-                                    value={searchProduct}
-                                    onChangeText={setSearchProduct}
-                               />
-                          </View>
+                         <View style={{ marginBottom: 12 }}>
+                              <CustomInput
+                                   leftIcon="search"
+                                   value={searchProduct}
+                                   onChangeText={setSearchProduct}
+                                   placeholder="Buscar productos..."
+                                   rightIcon={searchProduct.length > 0 ? "x" : undefined}
+                                   onRightIconPress={() => setSearchProduct('')}
+                              />
+                         </View>
 
-                          <FlatList
-                               data={filteredProducts}
-                               renderItem={renderProductItem}
-                               keyExtractor={(item: IProduct) => item._id || Math.random().toString()}
-                               contentContainerStyle={s.productList}
-                               showsVerticalScrollIndicator={false}
-                          />
-                     </View>
-                </RBSheet>
+                         <FlatList
+                              data={filteredProducts}
+                              renderItem={renderProductItem}
+                              keyExtractor={(item: IProduct) => item._id || Math.random().toString()}
+                              contentContainerStyle={style.productList}
+                              showsVerticalScrollIndicator={false}
+                         />
+                    </View>
+               </RBSheet>
 
-{/* ── RBSheet: editar lista ── */}
-                <RBSheet
-                     ref={editBsRef}
-                     height={editSheetHeight}
-                     draggable
-                >
-                     <View style={s.sheetContent}>
-                          <Text style={[s.sheetTitle, { color: C.text }]}>Editar Lista</Text>
+               {/* ── RBSheet: editar lista ── */}
+               <RBSheet
+                    ref={editBsRef}
+                    height={editSheetHeight}
+                    draggable
+                    customStyles={{
+                         wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+                         container: {
+                              backgroundColor: Colors.surfaceBackgroundColor,
+                              borderTopLeftRadius: 24,
+                              borderTopRightRadius: 24,
+                         },
+                         draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+                    }}
+               >
+                    <View style={style.sheetContent}>
+                         <Text style={[style.sheetTitle, { color: Colors.primaryTextColor }]}>Editar Lista</Text>
 
-                          {/* nombre */}
-                          <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
-                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                               <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
-                               <TextInput
-                                    style={[s.editInput, { color: C.inputText }]}
-                                    value={editName}
-                                    onChangeText={setEditName}
-                                    placeholder="Nombre de la lista"
-                                    placeholderTextColor={C.textMuted}
-                               />
-                          </View>
+                         {/* nombre */}
+                         <Text style={[style.inputLabel, { color: Colors.secondaryTextColor }]}>NOMBRE DE LA LISTA</Text>
+                         <View style={{ marginBottom: 16 }}>
+                              <CustomInput
+                                   leftIcon="shopping-cart"
+                                   value={editName}
+                                   onChangeText={setEditName}
+                                   placeholder="Nombre de la lista"
+                              />
+                         </View>
 
-                          {/* status */}
-                          <Text style={[s.inputLabel, { color: C.textMuted }]}>ESTADO</Text>
-                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                               <MaterialIcons name="flag" size={18} color={C.textMuted} />
-                               <TextInput
-                                    style={[s.editInput, { color: C.inputText }]}
-                                    value={editStatus === 'open' ? 'Abierta' : 'Cerrada'}
-                                    readOnly
-                                    onChangeText={(text: string) => setEditStatus(text === 'open' || text === 'closed' ? text : 'open')}
-                                    placeholder="Abierta o Cerrada"
-                                    placeholderTextColor={C.textMuted}
-                               />
-                          </View>
+                         {/* status */}
+                         <Text style={[style.inputLabel, { color: Colors.secondaryTextColor }]}>ESTADO</Text>
+                         <View style={{ marginBottom: 16 }}>
+                              <CustomInput
+                                   leftIcon="flag"
+                                   value={editStatus === 'open' ? 'Abierta' : 'Cerrada'}
+                                   readOnly
+                                   onChangeText={(text: string) => setEditStatus(text === 'open' || text === 'closed' ? text : 'open')}
+                                   placeholder="Abierta o Cerrada"
+                              />
+                         </View>
 
-                          {/* total amount */}
-                          <Text style={[s.inputLabel, { color: C.textMuted }]}>MONTO TOTAL</Text>
-                          <View style={[s.editInputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-                               <MaterialIcons name="attach-money" size={18} color={C.textMuted} />
-                               <TextInput
-                                    style={[s.editInput, { color: C.inputText }]}
-                                    value={editTotalAmount}
-                                    readOnly
-                                    onChangeText={setEditTotalAmount}
-                                    placeholder="0.00"
-                                    placeholderTextColor={C.textMuted}
-                                    keyboardType="decimal-pad"
-                               />
-                          </View>
+                         {/* total amount */}
+                         <Text style={[style.inputLabel, { color: Colors.secondaryTextColor }]}>MONTO TOTAL</Text>
+                         <View style={{ marginBottom: 16 }}>
+                              <CustomInput
+                                   leftIcon="dollar-sign"
+                                   value={editTotalAmount}
+                                   readOnly
+                                   onChangeText={setEditTotalAmount}
+                                   placeholder="0.00"
+                                   keyboardType="decimal-pad"
+                              />
+                         </View>
 
-                          {/* buttons */}
-                          <View style={s.sheetBtns}>
-                               <CustomButton
-                                    title="Cancelar"
-                                    variant="outlined"
-                                    onPress={() => editBsRef.current?.close()}
-                                    style={{ flex: 1 }}
-                               />
-                               <CustomButton
-                                    title={saving ? 'Guardando...' : 'Guardar'}
-                                    variant="primary"
-                                    onPress={handleSaveEdit}
-                                    isLoading={saving}
-                                    style={{ flex: 1 }}
-                               />
-                          </View>
-                     </View>
-                </RBSheet>
+                         {/* buttons */}
+                         <View style={style.sheetBtns}>
+                              <CustomButton
+                                   title="Cancelar"
+                                   variant="outlined"
+                                   onPress={() => editBsRef.current?.close()}
+                                   style={{ flex: 1 }}
+                              />
+                              <CustomButton
+                                   title={saving ? 'Guardando...' : 'Guardar'}
+                                   variant="primary"
+                                   onPress={handleSaveEdit}
+                                   isLoading={saving}
+                                   style={{ flex: 1 }}
+                              />
+                         </View>
+                    </View>
+               </RBSheet>
           </View >
      );
 }
 
-const s = StyleSheet.create({
+const style = StyleSheet.create({
      root: { flex: 1 },
      loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
      loadingTxt: { fontSize: 15, fontWeight: '500' },
      header: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
      backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-     headerTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.2, flex: 1, textAlign: 'center' },
+     headerTitle: { fontSize: 20, letterSpacing: -0.2, flex: 1, textAlign: 'center' },
      categorySection: { marginBottom: 24 },
      categoryLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 },
      itemWrapper: { marginBottom: 16 },
      itemRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-     checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-     imgBox: { width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 , backgroundColor: '#FFFFFF',  shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
+     checkbox: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+     imgBox: { width: 64, height: 64, borderRadius: 50, alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      img: { width: '100%', height: '100%' },
-     info: { flex: 1, gap: 1 },
-     price: { fontSize: 16, fontWeight: '700' },
-     name: { fontSize: 13, fontWeight: '500', lineHeight: 17 },
-     size: { fontSize: 11, marginTop: 1 },
-     qtyActions: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.02)' },
-     qtyBtn: { padding: 6, alignItems: 'center', justifyContent: 'center' },
-     qtyVal: { fontSize: 13, fontWeight: '700', paddingHorizontal: 4, minWidth: 22, textAlign: 'center' },
+     info: { flex: 1, gap: 3, justifyContent: 'center' },
+     name: { fontSize: 16, fontWeight: '600', lineHeight: 20 },
+     size: { fontSize: 13, fontWeight: '500' },
+     qtyActions: { flexDirection: 'row', alignItems: 'center', borderRadius: 24, padding: 4 },
+     qtyBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+     qtyVal: { fontSize: 16, fontWeight: '700', paddingHorizontal: 12, minWidth: 32, textAlign: 'center' },
      emptyWrap: { alignItems: 'center', paddingVertical: 64, gap: 12 },
      emptyTitle: { fontSize: 18, fontWeight: '700' },
      emptySub: { fontSize: 13, textAlign: 'center', maxWidth: 240 },
@@ -513,12 +488,12 @@ const s = StyleSheet.create({
      fab: { position: 'relative', bottom: 30, width: 56, height: 56, borderRadius: 28, backgroundColor: PRIMARY, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 8 },
      sheetBg: { borderTopLeftRadius: 28, borderTopRightRadius: 28 },
      sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
-     sheetTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
+     sheetTitle: { fontSize: 20, marginBottom: 16, textAlign: 'center' },
      searchBar: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 10, marginBottom: 12 },
      searchInput: { flex: 1, fontSize: 14, padding: 0, margin: 0 },
      productList: { paddingBottom: 20 },
      productItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
-     productImg: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' , backgroundColor: '#FFFFFF',  shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
+     productImg: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
      productImgInner: { width: '100%', height: '100%', borderRadius: 12 },
      productInfo: { flex: 1 },
      productName: { fontSize: 14, fontWeight: '600' },
@@ -571,11 +546,7 @@ const s = StyleSheet.create({
           justifyContent: 'space-between',
           paddingHorizontal: 28,
           height: 64,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
-          shadowRadius: 12,
-          elevation: 10,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2
      },
      actionBtn: { padding: 8 },
 

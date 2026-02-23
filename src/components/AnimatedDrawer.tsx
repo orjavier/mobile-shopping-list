@@ -1,9 +1,9 @@
-/**
+﻿/**
  * AnimatedDrawer — Side navigation drawer sliding from the right.
  * Stylized to match dark/light mode mockups precisely.
  */
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
@@ -31,35 +31,6 @@ const DRAWER_WIDTH = SCREEN_WIDTH * 0.82;
 const PRIMARY = '#FF6C37';
 
 // ─── Theme tokens based on mockups ─────────────────────────────────────────────
-const DARK = {
-     bg: '#111111',
-     text: '#FFFFFF',
-     textMuted: '#A0A0A0',
-     itemActiveBg: '#2C1A16', // Brownish-orange active bg from mockup
-     itemText: '#FFFFFF',
-     itemActiveText: PRIMARY,
-     iconBgInactive: '#222222',
-     iconBgActive: '#3D241E',
-     divider: 'rgba(255,255,255,0.08)',
-     logoutText: '#555555',
-     avatarRing: PRIMARY,
-};
-
-const LIGHT = {
-     bg: '#F9FAFB',
-     text: '#1A1C1E',
-     textMuted: '#707070',
-     itemActiveBg: '#FFF1EE', // Soft light orange active bg
-     itemText: '#1A1C1E',
-     itemActiveText: PRIMARY,
-     iconBgInactive: '#FFFFFF',
-     iconBgActive: '#FFEBE6',
-     divider: '#F1F3F5',
-     logoutText: '#64748B',
-     avatarRing: '#FFEDE8',
-     statusDot: '#2BD470',
-};
-
 const NAV_ITEMS = [
      { icon: 'person', label: 'Mi Perfil', route: '/(tabs)/profile' },
      { icon: 'settings', label: 'Configuraciones', route: '/settings' },
@@ -72,9 +43,7 @@ interface AnimatedDrawerProps {
 
 export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps) {
      const router = useRouter();
-     const scheme = useColorScheme();
-     const isDark = scheme === 'dark';
-     const C = isDark ? DARK : LIGHT;
+     const { colors: Colors, isDark } = useAppTheme();
 
      const user = useAuthStore((s) => s.user);
      const logout = useAuthStore((s) => s.logout);
@@ -127,12 +96,12 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
                          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
                     </Animated.View>
 
-                    <Animated.View style={[styles.drawer, { backgroundColor: C.bg }, animatedDrawerStyle]}>
+                    <Animated.View style={[styles.drawer, { backgroundColor: Colors.screenBackgroundColor }, animatedDrawerStyle]}>
                          <View style={{ height: statusBarH }} />
 
                          {/* ── Header / Avatar Section ── */}
                          <View style={styles.avatarSection}>
-                              <View style={[styles.avatarRing, { borderColor: C.avatarRing }]}>
+                              <View style={[styles.avatarRing, { borderColor: Colors.avatarRingColor }]}>
                                    {user?.secure_url ? (
                                         <Image source={{ uri: user.secure_url }} style={styles.avatarImg} />
                                    ) : (
@@ -140,13 +109,13 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
                                              <Text style={[styles.avatarTxt, { color: isDark ? '#A0A0A0' : PRIMARY }]}>{initials}</Text>
                                         </View>
                                    )}
-                                   {!isDark && <View style={[styles.statusDot, { backgroundColor: LIGHT.statusDot }]} />}
+                                   {!isDark && <View style={[styles.statusDot, { backgroundColor: '#FFFFFF' }]} />}
                               </View>
-                              <Text style={[styles.userName, { color: C.text }]}>{fullName}</Text>
-                              <Text style={[styles.userEmail, { color: C.textMuted }]}>{user?.email || 'user@email.com'}</Text>
+                              <Text style={[styles.userName, { color: Colors.primaryTextColor }]}>{fullName}</Text>
+                              <Text style={[styles.userEmail, { color: Colors.secondaryTextColor }]}>{user?.email || 'user@email.com'}</Text>
                          </View>
 
-                         <View style={[styles.hDivider, { backgroundColor: C.divider }]} />
+                         <View style={[styles.hDivider, { backgroundColor: Colors.dividerColor }]} />
 
                          {/* ── Menu Items ── */}
                          <View style={styles.menuList}>
@@ -160,7 +129,7 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
                                         >
                                              <View style={[
                                                   styles.iconWrap,
-                                                  { backgroundColor: C.iconBgInactive }
+                                                  { backgroundColor: Colors.drawerIconInactiveBackgroundColor }
                                              ]}>
                                                   <MaterialIcons
                                                        name={item.icon as any}
@@ -170,7 +139,7 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
                                              </View>
                                              <Text style={[
                                                   styles.menuLabel,
-                                                  { color: C.itemText }
+                                                  { color: Colors.drawerItemTextColor }
                                              ]}>
                                                   {item.label}
                                              </Text>
@@ -180,10 +149,10 @@ export default function AnimatedDrawer({ visible, onClose }: AnimatedDrawerProps
                          </View>
 
                          {/* ── Footer ── */}
-                         <View style={[styles.footer, !isDark && { borderTopWidth: 1, borderTopColor: C.divider }]}>
+                         <View style={[styles.footer, !isDark && { borderTopWidth: 1, borderTopColor: Colors.dividerColor }]}>
                               <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                                   <MaterialIcons name="logout" size={20} color={C.logoutText} />
-                                   <Text style={[styles.logoutTxtLight, { color: C.logoutText }]}>Cerrar sesión</Text>
+                                   <MaterialIcons name="logout" size={20} color={Colors.logoutTextColor} />
+                                   <Text style={[styles.logoutTxtLight, { color: Colors.logoutTextColor }]}>Cerrar sesión</Text>
                               </TouchableOpacity>
                          </View>
                     </Animated.View>

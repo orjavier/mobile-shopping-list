@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+﻿import { Image } from "expo-image";
 import { useCallback, useEffect, useState } from 'react';
 import {
      Dimensions,
@@ -16,7 +16,7 @@ import {
 import AnimatedDrawer from '@/components/AnimatedDrawer';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { IProduct } from '@/interfaces/product.interface';
 import { IShoppingList } from '@/interfaces/shopping-list.interface';
@@ -30,47 +30,7 @@ import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 
 // ─── design tokens ────────────────────────────────────────────────────────────
-const { width: W } = Dimensions.get('window');
-
-const LIGHT = {
-     bg: '#F9FAFB',
-     surface: '#FFFFFF',
-     headerBg: '#FFFFFF',
-     searchBg: '#FFFFFF',
-     text: '#0F172A',
-     textMuted: '#64748B',
-     textSub: '#94A3B8',
-     sectionTitle: '#0F172A',
-     listCard: '#FFFFFF',
-     listCardBorder: '#FFE4D6',
-     listCardIconBg: '#FFFFFF',
-     catCardBg: '#FFFFFF',
-     productCard: '#FFFFFF',
-     productCardBorder: '#F1F5F9',
-     productBg: '#FFFFFF',
-     statusOpen: '#22C55E',
-     statusOpenBg: '#DCFCE7',
-};
-
-const DARK = {
-     bg: '#0F0F0F',
-     surface: '#1C1C1E',
-     headerBg: 'rgba(15,15,15,0.90)',
-     searchBg: '#1A1A1A',
-     text: '#F1F5F9',
-     textMuted: '#94A3B8',
-     textSub: '#64748B',
-     sectionTitle: '#FFFFFF',
-     listCard: 'rgba(255,255,255,0.06)',
-     listCardBorder: 'rgba(255,255,255,0.10)',
-     listCardIconBg: `${PRIMARY}28`,
-     catCardBg: 'rgba(255,255,255,0.06)',
-     productCard: 'rgba(255,255,255,0.04)',
-     productCardBorder: 'rgba(255,255,255,0.07)',
-     productBg: 'transparent',
-     statusOpen: '#4ADE80',
-     statusOpenBg: 'rgba(74,222,128,0.15)',
-};
+const { width: WIDTH } = Dimensions.get('window');
 
 // ─── category emoji map ───────────────────────────────────────────────────────
 const EMOJI_MAP: Record<string, string> = {
@@ -85,16 +45,14 @@ const EMOJI_MAP: Record<string, string> = {
      higiene: '🧴', congelados: '🧊',
 };
 function emojiFor(name: string): string {
-     const k = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-     return EMOJI_MAP[k] ?? '🛒';
+     const CATEGORY = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+     return EMOJI_MAP[CATEGORY] ?? '🛒';
 }
 
 // ─── MAIN SCREEN ─────────────────────────────────────────────────────────────
 export default function HomeScreen() {
      const router = useRouter();
-     const scheme = useColorScheme();
-     const isDark = scheme === 'dark';
-     const C = isDark ? DARK : LIGHT;
+     const { colors: Colors, isDark } = useAppTheme();
      const user = useAuthStore((s) => s.user);
 
      const [lists, setLists] = useState<IShoppingList[]>([]);
@@ -135,53 +93,53 @@ export default function HomeScreen() {
           const open = item.status === 'open';
           return (
                <Pressable
-                    style={[s.lCard, { backgroundColor: C.listCard, borderColor: C.listCardBorder }]}
+                    style={[styles.lCard, { backgroundColor: Colors.listCardBackgroundColor, borderColor: Colors.listCardBorderColor }]}
                     onPress={() => router.push('/(tabs)/lists' as never)}
                >
-                    <View style={[s.lIcon, { backgroundColor: C.listCardIconBg }]}>
+                    <View style={[styles.lIcon, { backgroundColor: Colors.listCardIconBackgroundColor }]}>
                          <MaterialIcons name="shopping-cart" size={20} color={PRIMARY} />
                     </View>
-                    <View style={s.lBody}>
-                         <Text style={[s.lName, { color: C.text }]} numberOfLines={1}>{item.name}</Text>
-                         <Text style={[s.lMeta, { color: C.textMuted }]}>{item.itemsProduct?.length ?? 0} productos</Text>
+                    <View style={styles.lBody}>
+                         <Text style={[styles.lName, { color: Colors.primaryTextColor }]} numberOfLines={1}>{item.name}</Text>
+                         <Text style={[styles.lMeta, { color: Colors.secondaryTextColor }]}>{item.itemsProduct?.length ?? 0} productos</Text>
                     </View>
                     {open && (
-                         <View style={[s.openBadge, { backgroundColor: C.statusOpenBg }]}>
-                              <Text style={[s.openDot, { color: C.statusOpen }]}>●</Text>
+                         <View style={[styles.openBadge, { backgroundColor: Colors.statusOpenBackgroundColor }]}>
+                              <Text style={[styles.openDot, { color: Colors.statusOpenTextColor }]}>●</Text>
                          </View>
                     )}
                </Pressable>
           );
      };
 
-     const CatChip = ({ cat }: { cat: ICategory }) => (
+     const CatChip = ({ category }: { category: ICategory }) => (
           <Pressable
-               style={s.catChip}
+               style={styles.catChip}
                onPress={() => router.push('/(tabs)/categories' as never)}
           >
-               <View style={[s.catBox, { backgroundColor: C.catCardBg }]}>
-                    <Text style={s.catEmoji}>{emojiFor(cat.name)}</Text>
+               <View style={[styles.catBox, { backgroundColor: Colors.categoryCardBackgroundColor }]}>
+                    <Text style={styles.catEmoji}>{emojiFor(category.name)}</Text>
                </View>
-               <Text style={[s.catLabel, { color: C.textMuted }]} numberOfLines={1}>{cat.name}</Text>
+               <Text style={[styles.catLabel, { color: Colors.secondaryTextColor }]} numberOfLines={1}>{category.name}</Text>
           </Pressable>
      );
 
-     const ProdCard = ({ prod }: { prod: IProduct }) => (
+     const ProdCard = ({ product }: { product: IProduct }) => (
           <Pressable
-               style={[s.pCard, { backgroundColor: C.productCard, borderColor: C.productCardBorder }]}
+               style={[styles.pCard, { backgroundColor: Colors.productCardBackgroundColor, borderColor: Colors.productCardBorderColor }]}
                onPress={() => router.push('/(tabs)/products' as never)}
           >
-               <View style={[s.pImgWrap, { backgroundColor: C.productBg }]}>
-                    {prod.secure_url
-                         ? <Image source={{ uri: prod.secure_url }} style={s.pImg} resizeMode="cover" />
-                         : <Text style={s.pEmoji}>🛍️</Text>
+               <View style={[styles.pImgWrap, { backgroundColor: Colors.productImageBackgroundColor }]}>
+                    {product.secure_url
+                         ? <Image source={{ uri: product.secure_url }} style={styles.pImg} resizeMode="cover" />
+                         : <Text style={styles.pEmoji}>🛍️</Text>
                     }
                </View>
-               <View style={s.pInfo}>
-                    <Text style={[s.pName, { color: C.text }]} numberOfLines={1}>{prod.name}</Text>
-                    <Text style={[s.pUnit, { color: C.textMuted }]}>{prod.defaultUnit ?? '1 u.'}</Text>
-                    <Text style={[s.pPrice, { color: PRIMARY }]}>
-                         {prod.defaultPrice != null ? fmt(prod.defaultPrice) : '—'}
+               <View style={styles.pInfo}>
+                    <Text style={[styles.pName, { color: Colors.primaryTextColor }]} numberOfLines={1}>{product.name}</Text>
+                    <Text style={[styles.pUnit, { color: Colors.secondaryTextColor }]}>{product.defaultUnit ?? '1 u.'}</Text>
+                    <Text style={[styles.pPrice, { color: PRIMARY }]}>
+                         {product.defaultPrice != null ? fmt(product.defaultPrice) : '—'}
                     </Text>
                </View>
           </Pressable>
@@ -190,11 +148,11 @@ export default function HomeScreen() {
      // ─── loading ───────────────────────────────────────────────────────────────
      if (isLoading) {
           return (
-               <View style={[s.root, { backgroundColor: C.bg }]}>
+               <View style={[styles.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                     <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
-                    <View style={s.loading}>
+                    <View style={styles.loading}>
                          <MaterialIcons name="shopping-cart" size={36} color={PRIMARY} />
-                         <Text style={[s.loadingTxt, { color: C.textMuted }]}>Cargando…</Text>
+                         <Text style={[styles.loadingTxt, { color: Colors.secondaryTextColor }]}>Cargando…</Text>
                     </View>
                     <CustomTabBar activeRoute="/(tabs)" />
                </View>
@@ -203,42 +161,42 @@ export default function HomeScreen() {
 
      // ─── render ────────────────────────────────────────────────────────────────
      return (
-          <View style={[s.root, { backgroundColor: C.bg }]}>
+          <View style={[styles.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
                {/* ── Sticky Header ── */}
-               <View style={s.header}>
+               <View style={styles.header}>
                     <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
-                    <View style={[s.headerRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                    <View style={[styles.headerRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                               <Image
                                    source={require('../assets/SVGs/simple-logo.svg')}
                                    style={{ width: 32, height: 32 }}
                                    contentFit="cover"
                               />
-                              <Text style={[s.hTitle, { color: C.sectionTitle }]}>Lista de Compras</Text>
+                              <Text style={[styles.hTitle, { color: Colors.primaryTextColor }]}>Lista de Compras</Text>
                          </View>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                              <Pressable onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
-                                   <Feather name="bell" size={24} color={C.text} />
+                              <Pressable onPress={() => setDrawerVisible(true)} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                                   <Feather name="bell" size={24} color={Colors.primaryTextColor} />
                               </Pressable>
-                              <Pressable onPress={() => setDrawerVisible(true)} style={[s.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
-                                   <Feather name="menu" size={24} color={C.text} />
+                              <Pressable onPress={() => setDrawerVisible(true)} style={[styles.menuBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                                   <Feather name="menu" size={24} color={Colors.primaryTextColor} />
                               </Pressable>
                          </View>
                     </View>
-                    <View style={[s.searchBar, { backgroundColor: C.searchBg }]}>
-                         <Feather name="search" size={20} color={C.textSub} />
+                    <View style={[styles.searchBar, { backgroundColor: Colors.searchBarBackgroundColor }]}>
+                         <Feather name="search" size={20} color={Colors.tertiaryTextColor} />
                          <TextInput
-                              style={[s.searchInput, { color: C.text }]}
+                              style={[styles.searchInput, { color: Colors.primaryTextColor }]}
                               placeholder="Buscar productos, categorías, o listas"
-                              placeholderTextColor={C.textSub}
+                              placeholderTextColor={Colors.tertiaryTextColor}
                               value={search}
                               onChangeText={setSearch}
                          />
                          {search.length > 0 && (
                               <Pressable onPress={() => setSearch('')}>
-                                   <Feather name="x" size={17} color={C.textMuted} />
+                                   <Feather name="x" size={17} color={Colors.secondaryTextColor} />
                               </Pressable>
                          )}
                     </View>
@@ -246,36 +204,36 @@ export default function HomeScreen() {
 
                {/* ── Content ── */}
                <ScrollView
-                    style={s.scroll}
-                    contentContainerStyle={s.scrollInner}
+                    style={styles.scroll}
+                    contentContainerStyle={styles.scrollInner}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />
                     }
                >
                     {/* Recent Lists */}
-                    <View style={s.section}>
-                         <View style={s.secHead}>
-                              <Text style={[s.secTitle, { color: C.sectionTitle }]}>Listas recientes</Text>
+                    <View style={styles.section}>
+                         <View style={styles.secHead}>
+                              <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Listas recientes</Text>
                               <Pressable onPress={() => router.push('/(tabs)/lists' as never)}>
-                                   <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
+                                   <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                               </Pressable>
                          </View>
                          {filtered.length === 0 ? (
-                              <View style={s.emptyRow}>
-                                   <Text style={[s.emptyTxt, { color: C.textMuted }]}>
+                              <View style={styles.emptyRow}>
+                                   <Text style={[styles.emptyTxt, { color: Colors.secondaryTextColor }]}>
                                         {search ? 'Sin resultados' : 'Aún no tienes listas de compras'}
                                    </Text>
                               </View>
                          ) : (
                               <FlatList
                                    data={filtered.slice(0, 10)}
-                                   keyExtractor={(i) => i._id ?? i.name}
+                                   keyExtractor={(item) => item._id ?? item.name}
                                    renderItem={({ item }) => <ListCard item={item} />}
                                    horizontal
                                    showsHorizontalScrollIndicator={false}
-                                   contentContainerStyle={s.hList}
-                                   style={s.hScroll}
+                                   contentContainerStyle={styles.hList}
+                                   style={styles.hScroll}
                                    scrollEnabled
                               />
                          )}
@@ -283,16 +241,16 @@ export default function HomeScreen() {
 
                     {/* Recent Categories */}
                     {categories.length > 0 && (
-                         <View style={s.section}>
-                              <View style={s.secHead}>
-                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Categorias recientes</Text>
+                         <View style={styles.section}>
+                              <View style={styles.secHead}>
+                                   <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Categorias recientes</Text>
                                    <Pressable onPress={() => router.push('/(tabs)/categories' as never)}>
-                                        <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todas</Text>
+                                        <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                                    </Pressable>
                               </View>
-                              <View style={s.catRow}>
-                                   {categories.slice(0, 4).map((c) => (
-                                        <CatChip key={c._id ?? c.name} cat={c} />
+                              <View style={styles.catRow}>
+                                   {categories.slice(0, 4).map((category) => (
+                                        <CatChip key={category._id ?? category.name} category={category} />
                                    ))}
                               </View>
                          </View>
@@ -300,16 +258,16 @@ export default function HomeScreen() {
 
                     {/* Recent Products */}
                     {products.length > 0 && (
-                         <View style={s.section}>
-                              <View style={s.secHead}>
-                                   <Text style={[s.secTitle, { color: C.sectionTitle }]}>Productos recientes</Text>
+                         <View style={styles.section}>
+                              <View style={styles.secHead}>
+                                   <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Productos recientes</Text>
                                    <Pressable onPress={() => router.push('/(tabs)/products' as never)}>
-                                        <Text style={[s.seeAll, { color: PRIMARY }]}>Ver todos</Text>
+                                        <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todos</Text>
                                    </Pressable>
                               </View>
-                              <View style={s.prodGrid}>
-                                   {products.slice(0, 4).map((p) => (
-                                        <ProdCard key={p._id ?? p.name} prod={p} />
+                              <View style={styles.prodGrid}>
+                                   {products.slice(0, 4).map((product) => (
+                                        <ProdCard key={product._id ?? product.name} product={product} />
                                    ))}
                               </View>
                          </View>
@@ -329,9 +287,9 @@ export default function HomeScreen() {
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 const PROD_COL_GAP = 12;
-const PROD_COL_W = (W - 40 - PROD_COL_GAP) / 2;
+const PROD_COL_W = (WIDTH - 40 - PROD_COL_GAP) / 2;
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
      root: { flex: 1 },
      loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
      loadingTxt: { fontSize: 15, fontWeight: '500' },

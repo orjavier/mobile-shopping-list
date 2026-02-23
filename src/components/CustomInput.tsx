@@ -4,8 +4,10 @@ import { BlurView } from 'expo-blur';
 import React, { ComponentProps, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-interface CustomInputProps {
-     label: string;
+import { TextInputProps } from 'react-native';
+
+interface CustomInputProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
+     label?: string;
      value: string;
      onChangeText: (text: string) => void;
      placeholder?: string;
@@ -13,6 +15,8 @@ interface CustomInputProps {
      secureTextEntry?: boolean;
      leftIcon?: ComponentProps<typeof Feather>['name'];
      onLeftIconPress?: () => void;
+     rightIcon?: ComponentProps<typeof Feather>['name'];
+     onRightIconPress?: () => void;
      isLightThemeDefault?: boolean;
 }
 
@@ -24,7 +28,10 @@ const CustomInput = ({
      error,
      leftIcon,
      onLeftIconPress,
-     secureTextEntry
+     rightIcon,
+     onRightIconPress,
+     secureTextEntry,
+     ...textInputProps
 }: CustomInputProps) => {
      const colorScheme = useColorScheme();
      const [focused, setFocused] = useState(false);
@@ -89,9 +96,17 @@ const CustomInput = ({
                               autoCapitalize="none"
                               underlineColorAndroid="transparent"
                               selectionColor="#FF803E"
+                              {...textInputProps}
                          />
-
-
+                         {rightIcon && (
+                              <Pressable style={styles.rightIcon} onPress={onRightIconPress}>
+                                   <Feather
+                                        name={rightIcon}
+                                        size={20}
+                                        color={colors.placeholder}
+                                   />
+                              </Pressable>
+                         )}
                     </View>
                </BlurView>
 
@@ -143,8 +158,11 @@ const styles = StyleSheet.create({
           fontFamily: 'SF',
      },
      leftIcon: {
-          //padding: 8,
-          //marginLeft: 2,
+          marginRight: 8,
+     },
+     rightIcon: {
+          padding: 4,
+          marginLeft: 8,
      },
      errorText: {
           fontSize: 12,

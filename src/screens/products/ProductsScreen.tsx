@@ -1,9 +1,8 @@
-import CustomButton from '@/components/CustomButton';
+﻿import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import CustomTabBar, { PRIMARY } from '@/components/CustomTabBar';
-import RBSheet from 'react-native-raw-bottom-sheet';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { IProduct } from '@/interfaces/product.interface';
 import { categoryRepository } from '@/repositories/category.repository';
@@ -21,38 +20,15 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-
+import RBSheet from 'react-native-raw-bottom-sheet';
 const UNITS = ['Unidad', 'Kilo', 'Medio Kilo', 'Gramo', 'Litro', 'Medio Litro', 'Mililitro', 'Galón', 'Botella', 'Lata', 'Paquete', 'Caja', 'Bolsa', 'Docena'];
-
-const LIGHT = {
-  bg: '#F9FAFB',
-  text: '#0F172A',
-  textSub: '#64748B',
-  cardBg: '#FFFFFF',
-  bottomSheetBg: '#FFFFFF',
-  handle: '#ddd',
-  colorLabel: '#666',
-};
-
-const DARK = {
-  bg: '#0F0F0F',
-  text: '#F1F5F9',
-  textSub: '#94A3B8',
-  cardBg: 'rgba(255,255,255,0.06)',
-  bottomSheetBg: '#1C1C1E',
-  handle: '#444',
-  colorLabel: '#94A3B8',
-};
 
 export default function ProductsScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
-  const C = isDark ? DARK : LIGHT;
+  const { colors: Colors, isDark } = useAppTheme();
 
   const [products, setProducts] = useState<IProduct[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -178,17 +154,17 @@ export default function ProductsScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { backgroundColor: Colors.screenBackgroundColor, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={PRIMARY} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: C.bg }]}>
+    <View style={[styles.container, { backgroundColor: Colors.screenBackgroundColor }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: C.text }]}>Productos</Text>
-        <Text style={[styles.headerSubtitle, { color: C.textSub }]}>
+        <Text style={[styles.headerTitle, { color: Colors.primaryTextColor }]}>Productos</Text>
+        <Text style={[styles.headerSubtitle, { color: Colors.tertiaryTextColor }]}>
           {products.length} {products.length === 1 ? 'producto' : 'productos'}
         </Text>
       </View>
@@ -196,9 +172,9 @@ export default function ProductsScreen() {
       <View style={styles.content}>
         {products.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Feather name="box" size={64} color={C.textSub} style={{ opacity: 0.5 }} />
-            <Text style={[styles.emptyText, { color: C.text }]}>No hay productos</Text>
-            <Text style={[styles.emptySubtext, { color: C.textSub }]}>
+            <Feather name="box" size={64} color={Colors.tertiaryTextColor} style={{ opacity: 0.5 }} />
+            <Text style={[styles.emptyText, { color: Colors.primaryTextColor }]}>No hay productos</Text>
+            <Text style={[styles.emptySubtext, { color: Colors.tertiaryTextColor }]}>
               Toca el botón + para crear uno
             </Text>
           </View>
@@ -218,7 +194,7 @@ export default function ProductsScreen() {
             {products.map((product) => (
               <TouchableOpacity
                 key={product._id || Math.random().toString()}
-                style={[styles.productCard, { backgroundColor: C.cardBg }]}
+                style={[styles.productCard, { backgroundColor: Colors.surfaceBackgroundColor }]}
                 onPress={() => openEditSheet(product)}
                 onLongPress={() => handleDelete(product)}
                 activeOpacity={0.7}
@@ -229,15 +205,15 @@ export default function ProductsScreen() {
                   resizeMode="cover"
                 />
                 <View style={styles.productInfo}>
-                  <Text style={[styles.productName, { color: C.text }]} numberOfLines={1}>
+                  <Text style={[styles.productName, { color: Colors.primaryTextColor }]} numberOfLines={1}>
                     {product.name}
                   </Text>
-                  <Text style={[styles.productDetail, { color: C.textSub }]}>
-                    {product.defaultQuantity} {product.defaultUnit}
+                  <Text style={[styles.productDetail, { color: Colors.tertiaryTextColor }]}>
+                    {product.defaultUnit}
                   </Text>
                   {!!product.category && (
-                    <Text style={[styles.productCategory, { color: C.colorLabel }]}>
-                      Categoría: {categories.find((c) => c._id === product.category)?.name || 'Desconocida'}
+                    <Text style={[styles.productCategory, { color: Colors.colorLabelTextColor }]}>
+                      {categories.find((c) => c._id === product.category)?.name || 'Desconocida'}
                     </Text>
                   )}
                   {!!product.defaultPrice && (
@@ -247,7 +223,7 @@ export default function ProductsScreen() {
                   )}
                 </View>
                 <TouchableOpacity onPress={() => openEditSheet(product)} style={styles.editButton}>
-                  <Feather name="edit-2" size={20} color={C.textSub} />
+                  <Feather name="edit-2" size={20} color={Colors.tertiaryTextColor} />
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
@@ -259,9 +235,18 @@ export default function ProductsScreen() {
         ref={bottomSheetRef}
         height={400}
         draggable
+        customStyles={{
+          wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+          container: {
+            backgroundColor: Colors.bottomSheetBackgroundColor,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          },
+          draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+        }}
       >
         <View style={styles.bottomSheetContent}>
-          <Text style={[styles.bottomSheetTitle, { color: C.text }]}>
+          <Text style={[styles.bottomSheetTitle, { color: Colors.primaryTextColor }]}>
             {editingProduct?._id ? 'Editar Producto' : 'Nuevo Producto'}
           </Text>
 
@@ -286,10 +271,10 @@ export default function ProductsScreen() {
                 style={[styles.unitSelector, { backgroundColor: isDark ? 'rgba(30,30,30,1)' : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#E5E5EA' }]}
                 onPress={() => setIsUnitModalVisible(true)}
               >
-                <Text style={[styles.unitSelectorText, { color: productUnit ? C.text : C.textSub }]}>
+                <Text style={[styles.unitSelectorText, { color: productUnit ? Colors.primaryTextColor : Colors.tertiaryTextColor }]}>
                   {productUnit || 'Unidad'}
                 </Text>
-                <Feather name="chevron-down" size={20} color={C.textSub} />
+                <Feather name="chevron-down" size={20} color={Colors.tertiaryTextColor} />
               </Pressable>
             </View>
           </View>
@@ -298,10 +283,10 @@ export default function ProductsScreen() {
             style={[styles.unitSelector, { backgroundColor: isDark ? 'rgba(30,30,30,1)' : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#E5E5EA', }]}
             onPress={() => setIsCategoryModalVisible(true)}
           >
-            <Text style={[styles.unitSelectorText, { color: productCategory ? C.text : C.textSub }]}>
+            <Text style={[styles.unitSelectorText, { color: productCategory ? Colors.primaryTextColor : Colors.tertiaryTextColor }]}>
               {productCategory ? categories.find(c => c._id === productCategory)?.name || 'Desconocida' : 'Seleccionar Categoría'}
             </Text>
-            <Feather name="chevron-down" size={20} color={C.textSub} />
+            <Feather name="chevron-down" size={20} color={Colors.tertiaryTextColor} />
           </Pressable>
 
           <CustomInput
@@ -342,8 +327,8 @@ export default function ProductsScreen() {
           style={styles.modalOverlay}
           onPress={() => setIsUnitModalVisible(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: C.bottomSheetBg }]}>
-            <Text style={[styles.modalTitle, { color: C.text }]}>Seleccionar Unidad</Text>
+          <View style={[styles.modalContent, { backgroundColor: Colors.bottomSheetBackgroundColor }]}>
+            <Text style={[styles.modalTitle, { color: Colors.primaryTextColor }]}>Seleccionar Unidad</Text>
             <ScrollView style={styles.modalScroll}>
               {UNITS.map((u) => (
                 <TouchableOpacity
@@ -354,7 +339,7 @@ export default function ProductsScreen() {
                     setIsUnitModalVisible(false);
                   }}
                 >
-                  <Text style={[styles.modalOptionText, { color: productUnit === u ? PRIMARY : C.text }]}>
+                  <Text style={[styles.modalOptionText, { color: productUnit === u ? PRIMARY : Colors.primaryTextColor }]}>
                     {u}
                   </Text>
                   {productUnit === u && <Feather name="check" size={20} color={PRIMARY} />}
@@ -376,8 +361,8 @@ export default function ProductsScreen() {
           style={styles.modalOverlay}
           onPress={() => setIsCategoryModalVisible(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: C.bottomSheetBg }]}>
-            <Text style={[styles.modalTitle, { color: C.text }]}>Seleccionar Categoría</Text>
+          <View style={[styles.modalContent, { backgroundColor: Colors.bottomSheetBackgroundColor }]}>
+            <Text style={[styles.modalTitle, { color: Colors.primaryTextColor }]}>Seleccionar Categoría</Text>
             <ScrollView style={styles.modalScroll}>
               <TouchableOpacity
                 style={[styles.modalOption, !productCategory && { backgroundColor: PRIMARY + '20' }]}
@@ -386,7 +371,7 @@ export default function ProductsScreen() {
                   setIsCategoryModalVisible(false);
                 }}
               >
-                <Text style={[styles.modalOptionText, { color: !productCategory ? PRIMARY : C.text }]}>
+                <Text style={[styles.modalOptionText, { color: !productCategory ? PRIMARY : Colors.primaryTextColor }]}>
                   Sin categoría
                 </Text>
                 {!productCategory && <Feather name="check" size={20} color={PRIMARY} />}
@@ -400,7 +385,7 @@ export default function ProductsScreen() {
                     setIsCategoryModalVisible(false);
                   }}
                 >
-                  <Text style={[styles.modalOptionText, { color: productCategory === c._id ? PRIMARY : C.text }]}>
+                  <Text style={[styles.modalOptionText, { color: productCategory === c._id ? PRIMARY : Colors.primaryTextColor }]}>
                     {c.name}
                   </Text>
                   {productCategory === c._id && <Feather name="check" size={20} color={PRIMARY} />}
@@ -424,8 +409,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 20,
   },
   headerSubtitle: {
     fontSize: 16,
@@ -467,7 +451,7 @@ const styles = StyleSheet.create({
   productImage: {
     width: 60,
     height: 60,
-    borderRadius: 12,
+    borderRadius: 50,
     marginRight: 16,
     backgroundColor: '#E2E8F0',
   },
@@ -511,8 +495,6 @@ const styles = StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
     textAlign: 'center',
   },
   row: {

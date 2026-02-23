@@ -1,4 +1,4 @@
-import { Text } from '@/components/Themed';
+﻿import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -6,41 +6,13 @@ import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
-
+import { useAppTheme } from '@/hooks/useAppTheme';
 const PRIMARY = '#FF6C37';
-
-const LIGHT = {
-     bg: '#F9FAFB',
-     text: '#1F1F1F',
-     textSub: '#64748B',
-     cardBg: '#FFFFFF',
-     iconBg: '#FFF0EE',
-     trackOn: '#FF5A33',
-     trackOff: '#E9E9EB',
-     border: '#E2E8F0',
-     bottomSheetBg: '#FFFFFF',
-     bottomSheetText: '#1F1F1F',
-};
-
-const DARK = {
-     bg: '#0F0F0F',
-     text: '#FFFFFF',
-     textSub: '#94A3B8',
-     cardBg: '#1C1C1E',
-     iconBg: '#3D211F',
-     trackOn: '#FF5A33',
-     trackOff: '#3A3A3C',
-     border: 'transparent',
-     bottomSheetBg: '#1C1C1E',
-     bottomSheetText: '#FFFFFF',
-};
 
 export default function SettingsScreen() {
      const router = useRouter();
      const { theme, setTheme } = useThemeStore();
-     const nativeScheme = useColorScheme();
-     const isDark = nativeScheme === 'dark';
-     const C = isDark ? DARK : LIGHT;
+          const { colors: Colors, isDark } = useAppTheme();
      const logout = useAuthStore((s) => s.logout);
 
      const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
@@ -66,13 +38,13 @@ export default function SettingsScreen() {
      }) => {
           if (isDark) {
                return (
-                    <View style={[styles.pillCard, { backgroundColor: C.cardBg }]}>
+                    <View style={[styles.pillCard, { backgroundColor: Colors.surfaceBackgroundColor }]}>
                          <View style={styles.pillCardContent}>
                               <View style={styles.cardIconLabel}>
-                                   <View style={[styles.iconCircle, { backgroundColor: C.iconBg }]}>
+                                   <View style={[styles.iconCircle, { backgroundColor: Colors.settingsIconBackgroundColor }]}>
                                         <MaterialIcons name={icon as any} size={24} color={PRIMARY} />
                                    </View>
-                                   <Text style={[styles.cardLabel, { color: C.text }]}>{label}</Text>
+                                   <Text style={[styles.cardLabel, { color: Colors.primaryTextColor }]}>{label}</Text>
                               </View>
                               {rightElement}
                          </View>
@@ -84,10 +56,10 @@ export default function SettingsScreen() {
           return (
                <View style={styles.flatRow}>
                     <View style={styles.cardIconLabel}>
-                         <View style={[styles.iconCircle, { backgroundColor: C.iconBg }]}>
+                         <View style={[styles.iconCircle, { backgroundColor: Colors.settingsIconBackgroundColor }]}>
                               <MaterialIcons name={icon as any} size={24} color={PRIMARY} />
                          </View>
-                         <Text style={[styles.cardLabel, { color: C.text }]}>{label}</Text>
+                         <Text style={[styles.cardLabel, { color: Colors.primaryTextColor }]}>{label}</Text>
                     </View>
                     {rightElement}
                </View>
@@ -95,14 +67,14 @@ export default function SettingsScreen() {
      };
 
      return (
-          <View style={[styles.container, { backgroundColor: C.bg }]}>
+          <View style={[styles.container, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
                <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28 }} />
 
                {/* Header */}
                <View style={styles.headerRow}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                         <MaterialIcons name="arrow-back-ios" size={20} color={C.text} />
+                         <MaterialIcons name="arrow-back-ios" size={20} color={Colors.primaryTextColor} />
                     </TouchableOpacity>
                     <View style={styles.backBtn} />
                </View>
@@ -110,7 +82,7 @@ export default function SettingsScreen() {
                <ScrollView contentContainerStyle={styles.content}>
 
                     <View style={[styles.headerRow, { justifyContent: 'center', paddingBottom: 40 }]}>
-                         <Text style={[styles.headerTitle, { color: C.text }]}>
+                         <Text style={[styles.headerTitle, { color: Colors.primaryTextColor }]}>
                               {isDark ? 'Configuraciones' : 'Configuración'}
                          </Text>
                     </View>
@@ -121,9 +93,9 @@ export default function SettingsScreen() {
                               <Switch
                                    value={false}
                                    onValueChange={() => { }}
-                                   trackColor={{ false: C.trackOff, true: C.trackOn }}
+                                   trackColor={{ false: Colors.borderColor, true: Colors.statusOpenTextColor }}
                                    thumbColor="#FFF"
-                                   ios_backgroundColor={C.trackOff}
+                                   ios_backgroundColor={Colors.borderColor}
                               />
                          ),
                     })}
@@ -135,9 +107,9 @@ export default function SettingsScreen() {
                               <Switch
                                    value={isDark}
                                    onValueChange={toggleTheme}
-                                   trackColor={{ false: C.trackOff, true: C.trackOn }}
+                                   trackColor={{ false: Colors.borderColor, true: Colors.statusOpenTextColor }}
                                    thumbColor="#FFF"
-                                   ios_backgroundColor={C.trackOff}
+                                   ios_backgroundColor={Colors.borderColor}
                               />
                          ),
                     })}
@@ -164,12 +136,12 @@ export default function SettingsScreen() {
                >
                     <View style={styles.modalOverlay}>
                          <Pressable style={styles.modalBackdrop} onPress={() => setIsLogoutModalVisible(false)} />
-                         <View style={[styles.bottomSheet, { backgroundColor: C.bottomSheetBg }]}>
+                         <View style={[styles.bottomSheet, { backgroundColor: Colors.bottomSheetBackgroundColor }]}>
                               <View style={styles.dragIndicator} />
-                              <Text style={[styles.sheetTitle, { color: C.bottomSheetText }]}>
+                              <Text style={[styles.sheetTitle, { color: Colors.primaryTextColor }]}>
                                    ¿Estás seguro?
                               </Text>
-                              <Text style={[styles.sheetSubtitle, { color: C.bottomSheetText, opacity: 0.7 }]}>
+                              <Text style={[styles.sheetSubtitle, { color: Colors.primaryTextColor, opacity: 0.7 }]}>
                                    ¿Deseas cerrar tu sesión actual? Tendrás que volver a iniciar sesión para acceder a tu cuenta.
                               </Text>
 
@@ -178,7 +150,7 @@ export default function SettingsScreen() {
                               </TouchableOpacity>
 
                               <TouchableOpacity style={styles.sheetCancelBtn} onPress={() => setIsLogoutModalVisible(false)}>
-                                   <Text style={[styles.sheetCancelBtnText, { color: C.bottomSheetText }]}>
+                                   <Text style={[styles.sheetCancelBtnText, { color: Colors.primaryTextColor }]}>
                                         Cancelar
                                    </Text>
                               </TouchableOpacity>

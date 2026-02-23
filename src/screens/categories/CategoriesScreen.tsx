@@ -1,8 +1,8 @@
-import CustomButton from '@/components/CustomButton';
+﻿import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import CustomTabBar, { PRIMARY } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { ICategory } from '@/interfaces/category.interface';
 import { categoryRepository } from '@/repositories/category.repository';
 import { showToast } from '@/toast';
@@ -19,37 +19,14 @@ import {
   View
 } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
-
 const COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
 ];
 
-const LIGHT = {
-  bg: '#F9FAFB',
-  text: '#0F172A',
-  textSub: '#64748B',
-  cardBg: '#FFFFFF',
-  bottomSheetBg: '#FFFFFF',
-  handle: '#ddd',
-  colorLabel: '#666',
-};
-
-const DARK = {
-  bg: '#0F0F0F',
-  text: 'rgba(77, 77, 77, 0.5)',
-  textSub: '#94A3B8',
-  cardBg: 'rgba(255,255,255,0.06)',
-  bottomSheetBg: '#1C1C1E',
-  handle: '#444',
-  colorLabel: '#94A3B8',
-};
-
 export default function CategoriesScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
-  const C = isDark ? DARK : LIGHT;
+  const { colors: Colors, isDark } = useAppTheme();
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,17 +134,17 @@ export default function CategoriesScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { backgroundColor: Colors.screenBackgroundColor, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={PRIMARY} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: C.bg }]}>
+    <View style={[styles.container, { backgroundColor: Colors.screenBackgroundColor }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: C.text }]}>Categorías</Text>
-        <Text style={[styles.headerSubtitle, { color: C.textSub }]}>
+        <Text style={[styles.headerTitle, { color: Colors.primaryTextColor }]}>Categorías</Text>
+        <Text style={[styles.headerSubtitle, { color: Colors.tertiaryTextColor }]}>
           {categories.length} {categories.length === 1 ? 'categoría' : 'categorías'}
         </Text>
       </View>
@@ -175,9 +152,9 @@ export default function CategoriesScreen() {
       <View style={styles.content}>
         {categories.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="folder-open" size={64} color={C.textSub} style={{ opacity: 0.5 }} />
-            <Text style={[styles.emptyText, { color: C.text }]}>No hay categorías</Text>
-            <Text style={[styles.emptySubtext, { color: C.textSub }]}>
+            <MaterialIcons name="folder-open" size={64} color={Colors.tertiaryTextColor} style={{ opacity: 0.5 }} />
+            <Text style={[styles.emptyText, { color: Colors.primaryTextColor }]}>No hay categorías</Text>
+            <Text style={[styles.emptySubtext, { color: Colors.tertiaryTextColor }]}>
               Toca el botón + para crear una
             </Text>
           </View>
@@ -197,14 +174,14 @@ export default function CategoriesScreen() {
             {categories.map((item) => (
               <TouchableOpacity
                 key={item._id || Math.random().toString()}
-                style={[styles.categoryCard, { backgroundColor: C.cardBg }]}
+                style={[styles.categoryCard, { backgroundColor: Colors.surfaceBackgroundColor }]}
                 onPress={() => openEditSheet(item)}
                 onLongPress={() => handleDelete(item)}
                 activeOpacity={0.7}
               >
                 <View style={[styles.colorIndicator, { backgroundColor: item.color }]} />
-                <Text style={[styles.categoryName, { color: C.text }]}>{item.name}</Text>
-                <MaterialIcons name="chevron-right" size={24} color={C.textSub} />
+                <Text style={[styles.categoryName, { color: Colors.primaryTextColor }]}>{item.name}</Text>
+                <MaterialIcons name="chevron-right" size={24} color={Colors.tertiaryTextColor} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -213,11 +190,20 @@ export default function CategoriesScreen() {
 
       <RBSheet
         ref={bottomSheetRef}
-        height={350}
+        height={370}
         draggable
+        customStyles={{
+          wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+          container: {
+            backgroundColor: Colors.bottomSheetBackgroundColor,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          },
+          draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+        }}
       >
         <View style={styles.bottomSheetContent}>
-          <Text style={[styles.bottomSheetTitle, { color: isDark ? C.colorLabel : C.colorLabel }]}>
+          <Text style={[styles.bottomSheetTitle, { color: Colors.primaryTextColor }]}>
             {editingCategory?._id ? 'Editar Categoría' : 'Nueva Categoría'}
           </Text>
 
@@ -228,7 +214,7 @@ export default function CategoriesScreen() {
             onChangeText={setCategoryName}
           />
 
-          <Text style={[styles.colorLabel, { color: C.colorLabel }]}>Color</Text>
+          <Text style={[styles.colorLabel, { color: Colors.colorLabelTextColor }]}>Color</Text>
           <View style={styles.colorGrid}>
             {COLORS.map((color) => (
               <TouchableOpacity
@@ -346,8 +332,8 @@ const styles = StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: 20,
-    marginBottom: 20,
     textAlign: 'center',
+    marginBottom: 16,
   },
   colorLabel: {
     fontSize: 14,

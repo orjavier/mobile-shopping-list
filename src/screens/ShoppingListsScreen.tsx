@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ShoppingListsScreen — boceto: dark_mode_shopping_lists_overview.html
  * Header: "Shopping lists" centrado
  * Sección "Our recommendations" (listas del sistema)
@@ -6,7 +6,6 @@
  * CustomTabBar existente + BottomSheet para crear lista
  */
 
-import RBSheet from 'react-native-raw-bottom-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -19,10 +18,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import RBSheet from 'react-native-raw-bottom-sheet';
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
-import { useColorScheme } from '@/components/useColorScheme';
 import { CreateShoppingListDTO } from '@/dtos/shopping-list.dto';
 import { IShoppingList, IShoppingListUpdate } from '@/interfaces/shopping-list.interface';
 import { shoppingListRepository } from '@/repositories/shopping-list.repository';
@@ -31,47 +29,8 @@ import { showToast } from '@/toast';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-
+import { useAppTheme } from '@/hooks/useAppTheme';
 // ─── design tokens ────────────────────────────────────────────────────────────
-const LIGHT = {
-  bg: '#F9FAFB',
-  surface: '#FFFFFF',
-  header: 'rgba(249,250,251,0.9)',
-  text: '#0F172A',
-  textMuted: '#64748B',
-  textSub: '#94A3B8',
-  sectionLabel: '#94A3B8',
-  card: '#FFFFFF',
-  cardBorder: 'rgba(0,0,0,0.04)',
-  chevron: '#CBD5E1',
-  sheetBg: '#FFFFFF',
-  inputBg: '#FFFFFF',
-  inputBorder: '#E2E8F0',
-  inputText: '#0F172A',
-  cancelBg: '#F1F5F9',
-  cancelText: '#64748B',
-  separator: '#F1F5F9',
-};
-const DARK = {
-  bg: '#121212',
-  surface: '#1C1C1E',
-  header: 'rgba(18,18,18,0.92)',
-  text: '#F1F5F9',
-  textMuted: '#94A3B8',
-  textSub: '#64748B',
-  sectionLabel: '#64748B',
-  card: '#1C1C1E',
-  cardBorder: 'rgba(255,255,255,0.05)',
-  chevron: '#4B5563',
-  sheetBg: '#1C1C1E',
-  inputBg: '#252525',
-  inputBorder: 'rgba(255,255,255,0.08)',
-  inputText: '#F1F5F9',
-  cancelBg: '#252525',
-  cancelText: '#94A3B8',
-  separator: 'rgba(255,255,255,0.07)',
-};
-
 // icon+color palettes para las tarjetas (ciclo)
 const PALETTES = [
   { bg: '#FFF3E0', icon: 'shopping-basket', iconColor: PRIMARY },
@@ -102,18 +61,18 @@ interface RowProps {
   item: IShoppingList;
   idx: number;
   isDark: boolean;
-  C: typeof LIGHT;
+  Colors: ReturnType<typeof useAppTheme>['colors'];
   onPress: () => void;
   onLongPress: () => void;
   onSettingsPress: () => void;
 }
 
-function ListRow({ item, idx, isDark, C, onPress, onLongPress, onSettingsPress }: RowProps) {
+function ListRow({ item, idx, isDark, Colors, onPress, onLongPress, onSettingsPress }: RowProps) {
   const pal = paletteFor(idx, isDark);
   const count = item.itemsProduct?.length ?? 0;
   return (
     <TouchableOpacity
-      style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder }]}
+      style={[s.row, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.borderColor }]}
       onPress={onPress}
       onLongPress={onLongPress}
       activeOpacity={0.72}
@@ -122,13 +81,13 @@ function ListRow({ item, idx, isDark, C, onPress, onLongPress, onSettingsPress }
         <MaterialIcons name={pal.icon as never} size={22} color={pal.iconColor} />
       </View>
       <View style={s.rowBody}>
-        <Text style={[s.rowName, { color: C.text }]}>{item.name}</Text>
-        <Text style={[s.rowSub, { color: C.textMuted }]}>{count} producto{count !== 1 ? 's' : ''}</Text>
+        <Text style={[s.rowName, { color: Colors.primaryTextColor }]}>{item.name}</Text>
+        <Text style={[s.rowSub, { color: Colors.secondaryTextColor }]}>{count} producto{count !== 1 ? 's' : ''}</Text>
       </View>
       <TouchableOpacity onPress={onSettingsPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-        <MaterialIcons name="settings" size={20} color={C.textMuted} />
+        <MaterialIcons name="settings" size={20} color={Colors.secondaryTextColor} />
       </TouchableOpacity>
-      <MaterialIcons name="chevron-right" size={22} color={C.chevron} style={{ marginLeft: 4 }} />
+      <MaterialIcons name="chevron-right" size={22} color={Colors.chevronColor} style={{ marginLeft: 4 }} />
     </TouchableOpacity>
   );
 }
@@ -136,9 +95,7 @@ function ListRow({ item, idx, isDark, C, onPress, onLongPress, onSettingsPress }
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ShoppingListsScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
-  const C = isDark ? DARK : LIGHT;
+  const { colors: Colors, isDark } = useAppTheme();
   const user = useAuthStore((s) => s.user);
 
   const [lists, setLists] = useState<IShoppingList[]>([]);
@@ -250,15 +207,15 @@ export default function ShoppingListsScreen() {
   const recent = lists.slice(1);
 
   return (
-    <View style={[s.root, { backgroundColor: C.bg }]}>
+    <View style={[s.root, { backgroundColor: Colors.screenBackgroundColor }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
       {/* ── Status bar spacer ── */}
       <View style={{ height: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 28) }} />
 
       {/* ── Header ── */}
-      <View style={[s.header, { backgroundColor: C.header }]}>
-        <Text style={[s.headerTitle, { color: C.text }]}>Shopping lists</Text>
+      <View style={[s.header, { backgroundColor: Colors.headerBackgroundColor }]}>
+        <Text style={[s.headerTitle, { color: Colors.primaryTextColor }]}>Shopping lists</Text>
       </View>
 
       {/* ── Content ── */}
@@ -274,22 +231,22 @@ export default function ShoppingListsScreen() {
         ListHeaderComponent={
           <>
             {/* ── "Our recommendations" ── */}
-            <Text style={[s.sectionLabel, { color: C.sectionLabel }]}>OUR RECOMMENDATIONS</Text>
+            <Text style={[s.sectionLabel, { color: Colors.sectionLabelTextColor }]}>OUR RECOMMENDATIONS</Text>
 
             {loading ? (
-              <View style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder, justifyContent: 'center' }]}>
-                <Text style={[s.rowSub, { color: C.textMuted }]}>Cargando…</Text>
+              <View style={[s.row, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.borderColor, justifyContent: 'center' }]}>
+                <Text style={[s.rowSub, { color: Colors.secondaryTextColor }]}>Cargando…</Text>
               </View>
             ) : recommendations.length === 0 ? (
-              <View style={[s.row, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+              <View style={[s.row, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.borderColor }]}>
                 <View style={[s.rowIcon, { backgroundColor: isDark ? 'rgba(255,108,55,0.22)' : '#FFF3E0' }]}>
                   <MaterialIcons name="shopping-basket" size={22} color={PRIMARY} />
                 </View>
                 <View style={s.rowBody}>
-                  <Text style={[s.rowName, { color: C.text }]}>Often purchased</Text>
-                  <Text style={[s.rowSub, { color: C.textMuted }]}>10 products</Text>
+                  <Text style={[s.rowName, { color: Colors.primaryTextColor }]}>Often purchased</Text>
+                  <Text style={[s.rowSub, { color: Colors.secondaryTextColor }]}>10 products</Text>
                 </View>
-                <MaterialIcons name="chevron-right" size={22} color={C.chevron} />
+                <MaterialIcons name="chevron-right" size={22} color={Colors.chevronColor} />
               </View>
             ) : (
               recommendations.map((item, i) => (
@@ -298,7 +255,7 @@ export default function ShoppingListsScreen() {
                   item={item}
                   idx={i}
                   isDark={isDark}
-                  C={C}
+                  Colors={Colors}
                   onPress={() => router.push(`/list/${item._id}` as never)}
                   onLongPress={() => handleDelete(item)}
                   onSettingsPress={() => openEditSheet(item)}
@@ -307,15 +264,15 @@ export default function ShoppingListsScreen() {
             )}
 
             {/* ── "Recently created" ── */}
-            <Text style={[s.sectionLabel, { color: C.sectionLabel, marginTop: 28 }]}>RECENTLY CREATED</Text>
+            <Text style={[s.sectionLabel, { color: Colors.sectionLabelTextColor, marginTop: 28 }]}>RECENTLY CREATED</Text>
 
             {!loading && recent.length === 0 && (
               <View style={s.emptyWrap}>
                 <View style={[s.emptyIcon, { backgroundColor: `${PRIMARY}18` }]}>
                   <MaterialIcons name="add-shopping-cart" size={36} color={PRIMARY} />
                 </View>
-                <Text style={[s.emptyTitle, { color: C.text }]}>Sin listas aún</Text>
-                <Text style={[s.emptySub, { color: C.textMuted }]}>
+                <Text style={[s.emptyTitle, { color: Colors.primaryTextColor }]}>Sin listas aún</Text>
+                <Text style={[s.emptySub, { color: Colors.secondaryTextColor }]}>
                   Toca el botón + para crear tu primera lista
                 </Text>
               </View>
@@ -330,7 +287,7 @@ export default function ShoppingListsScreen() {
                 item={item}
                 idx={i + 1}
                 isDark={isDark}
-                C={C}
+                Colors={Colors}
                 onPress={() => router.push(`/list/${item._id}` as never)}
                 onLongPress={() => handleDelete(item)}
                 onSettingsPress={() => openEditSheet(item)}
@@ -348,26 +305,35 @@ export default function ShoppingListsScreen() {
         ref={bsRef}
         height={350}
         draggable
+        customStyles={{
+          wrapper: { backgroundColor: 'rgba(0,0,0,0.5)' },
+          container: {
+            backgroundColor: Colors.bottomSheetBackgroundColor,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          },
+          draggableIcon: { backgroundColor: isDark ? '#555' : '#DDD' },
+        }}
       >
         <View style={s.sheetContent}>
           {/* header */}
           <View style={s.sheetHeader}>
-            <Text style={[s.sheetTitle, { color: C.text }]}>Nueva Lista</Text>
-            <TouchableOpacity style={[s.sheetClose, { backgroundColor: C.inputBg }]} onPress={() => bsRef.current?.close()}>
-              <MaterialIcons name="close" size={18} color={C.textMuted} />
+            <Text style={[s.sheetTitle, { color: Colors.primaryTextColor }]}>Nueva Lista</Text>
+            <TouchableOpacity style={[s.sheetClose, { backgroundColor: Colors.inputBackgroundColor }]} onPress={() => bsRef.current?.close()}>
+              <MaterialIcons name="close" size={18} color={Colors.secondaryTextColor} />
             </TouchableOpacity>
           </View>
 
           {/* input */}
-          <Text style={[s.inputLabel, { color: C.textMuted }]}>NOMBRE DE LA LISTA</Text>
-          <View style={[s.inputWrap, { backgroundColor: C.inputBg, borderColor: C.inputBorder }]}>
-            <MaterialIcons name="shopping-cart" size={18} color={C.textMuted} />
+          <Text style={[s.inputLabel, { color: Colors.secondaryTextColor }]}>NOMBRE DE LA LISTA</Text>
+          <View style={[s.inputWrap, { backgroundColor: Colors.inputBackgroundColor, borderColor: Colors.inputBorderColor }]}>
+            <MaterialIcons name="shopping-cart" size={18} color={Colors.secondaryTextColor} />
             <TextInput
-              style={[s.bsInput, { color: C.inputText }]}
+              style={[s.bsInput, { color: Colors.inputTextColor }]}
               value={newName}
               onChangeText={setNewName}
               placeholder="Ej: Compras del supermercado"
-              placeholderTextColor={C.textSub}
+              placeholderTextColor={Colors.tertiaryTextColor}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
             />
@@ -376,10 +342,10 @@ export default function ShoppingListsScreen() {
           {/* buttons */}
           <View style={s.sheetBtns}>
             <TouchableOpacity
-              style={[s.cancelBtn, { backgroundColor: C.cancelBg, borderColor: C.inputBorder }]}
+              style={[s.cancelBtn, { backgroundColor: Colors.surfaceBackgroundColor, borderColor: Colors.inputBorderColor }]}
               onPress={() => bsRef.current?.close()}
             >
-              <Text style={[s.cancelTxt, { color: C.cancelText }]}>Cancelar</Text>
+              <Text style={[s.cancelTxt, { color: Colors.secondaryTextColor }]}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[s.createBtn, creating && { opacity: 0.6 }]}
