@@ -83,7 +83,7 @@ export class UserRepository {
   }
 
   async update(id: string, dto: UpdateUserDTO): Promise<any> {
-    const response = await apiService.patch<any>(
+    const response = await apiService.put<any>(
       `${API_ENDPOINTS.USERS}/${id}`,
       dto,
     );

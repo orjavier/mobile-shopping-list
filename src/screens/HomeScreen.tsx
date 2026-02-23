@@ -9,11 +9,11 @@ import {
      ScrollView,
      StatusBar,
      StyleSheet,
-     TextInput,
      View
 } from 'react-native';
 
 import AnimatedDrawer from '@/components/AnimatedDrawer';
+import CustomInput from "@/components/CustomInput";
 import CustomTabBar, { PRIMARY, TAB_TOTAL } from '@/components/CustomTabBar';
 import { Text } from '@/components/Themed';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -26,7 +26,6 @@ import { shoppingListRepository } from '@/repositories/shopping-list.repository'
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
 import { Feather } from '@expo/vector-icons';
-import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useRouter } from 'expo-router';
 
 // ─── design tokens ────────────────────────────────────────────────────────────
@@ -97,7 +96,7 @@ export default function HomeScreen() {
                     onPress={() => router.push('/(tabs)/lists' as never)}
                >
                     <View style={[styles.lIcon, { backgroundColor: Colors.listCardIconBackgroundColor }]}>
-                         <MaterialIcons name="shopping-cart" size={20} color={PRIMARY} />
+                         <Feather name="shopping-cart" size={20} color={PRIMARY} />
                     </View>
                     <View style={styles.lBody}>
                          <Text style={[styles.lName, { color: Colors.primaryTextColor }]} numberOfLines={1}>{item.name}</Text>
@@ -126,10 +125,16 @@ export default function HomeScreen() {
 
      const ProdCard = ({ product }: { product: IProduct }) => (
           <Pressable
-               style={[styles.pCard, { backgroundColor: Colors.productCardBackgroundColor, borderColor: Colors.productCardBorderColor }]}
+               style={[styles.pCard, {
+                    backgroundColor: Colors.productCardBackgroundColor, borderColor: Colors.productCardBorderColor
+               }]}
                onPress={() => router.push('/(tabs)/products' as never)}
           >
-               <View style={[styles.pImgWrap, { backgroundColor: Colors.productImageBackgroundColor }]}>
+               <View style={[
+                    styles.pImgWrap,
+                    !product.secure_url && styles.pImgWrapShadow,
+                    { backgroundColor: product.secure_url ? 'transparent' : Colors.productImageBackgroundColor }
+               ]}>
                     {product.secure_url
                          ? <Image source={{ uri: product.secure_url }} style={styles.pImg} resizeMode="cover" />
                          : <Text style={styles.pEmoji}>🛍️</Text>
@@ -151,7 +156,7 @@ export default function HomeScreen() {
                <View style={[styles.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                     <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
                     <View style={styles.loading}>
-                         <MaterialIcons name="shopping-cart" size={36} color={PRIMARY} />
+                         <Feather name="shopping-cart" size={36} color={PRIMARY} />
                          <Text style={[styles.loadingTxt, { color: Colors.secondaryTextColor }]}>Cargando…</Text>
                     </View>
                     <CustomTabBar activeRoute="/(tabs)" />
@@ -185,14 +190,14 @@ export default function HomeScreen() {
                               </Pressable>
                          </View>
                     </View>
-                    <View style={[styles.searchBar, { backgroundColor: Colors.searchBarBackgroundColor }]}>
-                         <Feather name="search" size={20} color={Colors.tertiaryTextColor} />
-                         <TextInput
-                              style={[styles.searchInput, { color: Colors.primaryTextColor }]}
-                              placeholder="Buscar productos, categorías, o listas"
-                              placeholderTextColor={Colors.tertiaryTextColor}
+                    <View style={{ marginTop: 20, }}>
+                         <CustomInput
+                              leftIcon="search"
                               value={search}
                               onChangeText={setSearch}
+                              placeholder="Buscar productos, categorías, listas..."
+                              rightIcon={search.length > 0 ? "x" : undefined}
+                              onRightIconPress={() => setSearch('')}
                          />
                          {search.length > 0 && (
                               <Pressable onPress={() => setSearch('')}>
@@ -214,7 +219,7 @@ export default function HomeScreen() {
                     {/* Recent Lists */}
                     <View style={styles.section}>
                          <View style={styles.secHead}>
-                              <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Listas recientes</Text>
+                              <Text style={[styles.secTitle, { color: Colors.sectionLabelTextColor }]}>LISTAS RECIENTES</Text>
                               <Pressable onPress={() => router.push('/(tabs)/lists' as never)}>
                                    <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                               </Pressable>
@@ -243,7 +248,7 @@ export default function HomeScreen() {
                     {categories.length > 0 && (
                          <View style={styles.section}>
                               <View style={styles.secHead}>
-                                   <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Categorias recientes</Text>
+                                   <Text style={[styles.secTitle, { color: Colors.sectionLabelTextColor }]}>Categorias recientes</Text>
                                    <Pressable onPress={() => router.push('/(tabs)/categories' as never)}>
                                         <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todas</Text>
                                    </Pressable>
@@ -260,7 +265,7 @@ export default function HomeScreen() {
                     {products.length > 0 && (
                          <View style={styles.section}>
                               <View style={styles.secHead}>
-                                   <Text style={[styles.secTitle, { color: Colors.primaryTextColor }]}>Productos recientes</Text>
+                                   <Text style={[styles.secTitle, { color: Colors.sectionLabelTextColor }]}>Productos recientes</Text>
                                    <Pressable onPress={() => router.push('/(tabs)/products' as never)}>
                                         <Text style={[styles.seeAll, { color: PRIMARY }]}>Ver todos</Text>
                                    </Pressable>
@@ -320,7 +325,12 @@ const styles = StyleSheet.create({
 
      section: { marginBottom: 28 },
      secHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-     secTitle: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
+     secTitle: {
+          fontSize: 11,
+          fontWeight: '700',
+          letterSpacing: 1.3,
+          textTransform: 'uppercase',
+     },
      seeAll: { fontSize: 13, fontWeight: '600' },
 
      hScroll: { marginHorizontal: -20 },
@@ -348,7 +358,21 @@ const styles = StyleSheet.create({
           width: PROD_COL_W, flexDirection: 'row', alignItems: 'center',
           borderRadius: 18, borderWidth: 1, padding: 10, gap: 10,
      },
-     pImgWrap: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, },
+     pImgWrap: {
+          width: 52, height: 52,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000',
+     },
+     pImgWrapShadow: {
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
+          elevation: 2,
+     },
      pImg: { width: '100%', height: '100%' },
      pEmoji: { fontSize: 24 },
      pInfo: { flex: 1, gap: 2 },

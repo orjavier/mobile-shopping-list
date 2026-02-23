@@ -109,7 +109,7 @@ export default function CustomTabBar({ activeRoute, onFabPress }: CustomTabBarPr
                <View style={[tb.bar, { shadowColor: '#000' }, {
                     borderWidth: 1,
                     borderColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.1)',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#fff',
+                    backgroundColor: isDark ? 'rgba(15, 15, 15, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                }]}>
                     <View style={tb.half}>{TABS_L.map(renderTab)}</View>
                     <View style={tb.centerGap} />
@@ -176,8 +176,7 @@ const tb = StyleSheet.create({
           alignItems: 'center',
           paddingHorizontal: 8,
           paddingBottom: TAB_BOTTOM_EXTRA,
-          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2
-
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2,
      },
      half: {
           flex: 1,

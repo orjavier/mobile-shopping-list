@@ -3,7 +3,8 @@
 ## 🚫 PROHIBIDO
 
 - ❌ NUNCA usar `any` - reemplazar inmediatamente por `unknown`
-- ❌ Responder en inglés
+- ❌ Nunca responder en inglés
+- ❌ Nunca usar abreviaciones sin contexto, por ejemplo: const user = useAuthStore((s) => s.user); en su lugar usar const user = useAuthStore((state) => state.user);
 
 ## ✅ OBLIGATORIO
 
@@ -30,10 +31,15 @@ MANDATORY RULES:
 
 When I ask for code, ALWAYS generate type-safe TypeScript without 'any'.
 
+## EVITAR
+
+Inline styles: style={{ margin: 10 }} salvo casos muy puntuales, por ejemplo: styles.bottomSheetHandle, { backgroundColor: isDark ? '#555' : '#DDD' },
+en el caso de que se tenga que validar una variable.
+
 ## ❌ PROHIBIDO
 
-❌ Inline styles: style={{ margin: 10 }}
 ❌ any types
 ❌ useState sin tipado
 ❌ console.log en producción
 ❌ Funcionales complejas > 100 líneas
+❌ No user TouchableOpacity en su lugar usar Pressable

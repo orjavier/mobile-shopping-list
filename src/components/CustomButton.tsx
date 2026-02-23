@@ -7,6 +7,7 @@ import {
      StyleSheet,
      Text,
      TextStyle,
+     View,
      ViewStyle
 } from 'react-native';
 
@@ -20,6 +21,7 @@ interface CustomButtonProps {
      disabled?: boolean;
      style?: ViewStyle;
      textStyle?: TextStyle;
+     leftIcon?: React.ReactNode;
 }
 
 const CustomButton = ({
@@ -29,7 +31,8 @@ const CustomButton = ({
      isLoading = false,
      disabled = false,
      style,
-     textStyle
+     textStyle,
+     leftIcon
 }: CustomButtonProps) => {
      const { isDarkMode } = useTheme();
 
@@ -119,14 +122,17 @@ const CustomButton = ({
                {isLoading ? (
                     <ActivityIndicator color={variant === 'outlined' ? COLORS.primary : (variant === 'warning' ? '#000000' : '#ffffff')} />
                ) : (
-                    <Text style={[
-                         styles.text,
-                         variantStyles.text,
-                         disabled && dynamicDisabledStyles.text,
-                         textStyle
-                    ]}>
-                         {title}
-                    </Text>
+                    <View style={styles.contentContainer}>
+                         {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+                         <Text style={[
+                              styles.text,
+                              variantStyles.text,
+                              disabled && dynamicDisabledStyles.text,
+                              textStyle
+                         ]}>
+                              {title}
+                         </Text>
+                    </View>
                )}
           </Pressable>
      );
@@ -156,6 +162,14 @@ const styles = StyleSheet.create({
      text: {
           fontSize: 17,
           fontFamily: 'SF',
+     },
+     contentContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+     },
+     iconContainer: {
+          marginRight: 8,
      },
 });
 

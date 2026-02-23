@@ -32,6 +32,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/toast';
 import { Feather } from '@expo/vector-icons';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
+import { BlurView } from 'expo-blur';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import RBSheet from 'react-native-raw-bottom-sheet';
 interface CartItem extends IItemProduct {
@@ -108,7 +109,6 @@ export default function CartViewScreen() {
      const fetchCategories = useCallback(async () => {
           try {
                const data = await categoryRepository.findAll();
-               console.log('================= CATEGORIAS =================', data);
                setCategories(data || []);
           } catch {
                // Ignore
@@ -129,15 +129,11 @@ export default function CartViewScreen() {
      const groupedItems = useMemo((): GroupedItems[] => {
           const groups: Record<string, CartItem[]> = {};
           items.forEach((item) => {
-               let catName = '';
+               let catName = 'General';
                if (item.category) {
                     const catObj = item.category as unknown as IItemProduct;
 
-                    console.log('item', item);
-                    console.log('item.category', item.category);
-
                     if (typeof catObj === 'object' && catObj !== null) {
-                         console.log('catObj=======>', catObj);
                          if (catObj.name) {
                               catName = catObj.name;
                          } else if (catObj._id) {
@@ -155,9 +151,6 @@ export default function CartViewScreen() {
                          catName = 'General';
                     }
                }
-
-               // Log property value for debugging
-               console.log(`[Categorization] Item: "${item.name}" | raw category:`, item.category, `-> resolved catName:`, catName);
 
                if (!groups[catName]) groups[catName] = [];
                groups[catName].push(item);
@@ -206,7 +199,6 @@ export default function CartViewScreen() {
                               if (!list._id || !item._id) return;
                               try {
                                    await shoppingListRepository.deleteItem(list._id, item._id);
-                                   console.log('Producto eliminado', item);
                                    showToast.success('Éxito', 'Producto eliminado');
                                    fetchList();
                               } catch {
@@ -220,6 +212,19 @@ export default function CartViewScreen() {
 
      const addProductToList = async (product: IProduct) => {
           if (!list?._id || !user?._id) return;
+
+          const existingItem = items.find(
+               (item) => item.name.toLowerCase() === product.name.toLowerCase()
+          );
+
+          if (existingItem) {
+               sheetRef.current?.close();
+               setTimeout(() => {
+                    showToast.error('Error', `"${product.name}" ya está en la lista`);
+               }, 300);
+               return;
+          }
+
           try {
                await shoppingListRepository.addItem(list._id, {
                     name: product.name,
@@ -230,7 +235,6 @@ export default function CartViewScreen() {
                     memberId: user._id,
                     category: product.category || 'General',
                });
-               console.log('product.category', product.category);
                showToast.success('Éxito', 'Producto agregado');
                sheetRef.current?.close();
                fetchList();
@@ -305,17 +309,18 @@ export default function CartViewScreen() {
           <View style={[style.root, { backgroundColor: Colors.screenBackgroundColor }]}>
                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
-               <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28, backgroundColor: Colors.headerBackgroundColor }} />
-
-               <View style={[style.header]}>
-                    <TouchableOpacity onPress={() => router.back()} style={[style.backBtn]}>
-                         <Feather name="chevron-left" size={24} color={Colors.primaryTextColor} />
-                    </TouchableOpacity>
-                    <Text style={[style.headerTitle, { color: Colors.primaryTextColor }]}>{list?.name || 'Carrito'} </Text>
-                    <TouchableOpacity onPress={openEditSheet} style={[style.backBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
-                         <Feather name="settings" size={20} color={Colors.primaryTextColor} />
-                    </TouchableOpacity>
-               </View>
+               <BlurView intensity={100} tint={isDark ? 'dark' : 'light'} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 }}>
+                    <View style={{ height: Platform.OS === 'ios' ? 54 : StatusBar.currentHeight ?? 28 }} />
+                    <View style={[style.header]}>
+                         <TouchableOpacity onPress={() => router.back()} style={[style.backBtn]}>
+                              <Feather name="chevron-left" size={24} color={Colors.primaryTextColor} />
+                         </TouchableOpacity>
+                         <Text style={[style.headerTitle, { color: Colors.primaryTextColor }]}>{list?.name || 'Carrito'} </Text>
+                         <TouchableOpacity onPress={openEditSheet} style={[style.backBtn, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }]}>
+                              <Feather name="settings" size={20} color={Colors.primaryTextColor} />
+                         </TouchableOpacity>
+                    </View>
+               </BlurView>
 
                {
                     loading ? (
@@ -326,9 +331,9 @@ export default function CartViewScreen() {
                     ) : (
                          <>
                               <ScrollView
-                                   contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 180 }}
+                                   contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 120, paddingBottom: 220 }}
                                    showsVerticalScrollIndicator={false}
-                                   refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />}
+                                   refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} progressViewOffset={120} />}
                               >
                                    {items.length === 0 ? (
                                         <View style={style.emptyWrap}>
@@ -403,7 +408,7 @@ export default function CartViewScreen() {
 
 
 
-                              <View style={[style.footer, { borderTopColor: Colors.footerBorderColor }]}>
+                              <BlurView intensity={100} tint={isDark ? 'dark' : 'light'} style={[style.footer, { borderTopColor: Colors.footerBorderColor }]}>
                                    <View style={style.footerContent}>
                                         <Text style={[style.footerLabel, { color: Colors.secondaryTextColor }]}>Total</Text>
                                         <Text style={[style.footerTotal, { color: Colors.primaryTextColor }]}>{total.toFixed(2).replace('.', ',')} €</Text>
@@ -414,7 +419,7 @@ export default function CartViewScreen() {
                                         onPress={() => { }}
                                         style={style.checkoutBtn}
                                    />
-                              </View>
+                              </BlurView>
                          </>
                     )
                }
